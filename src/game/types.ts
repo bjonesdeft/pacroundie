@@ -35,6 +35,8 @@ export interface Prize {
   ring: number
   angle: number
   points: number
+  /** Index into FRUIT_KINDS / classic fruit progression. */
+  kind: number
   active: boolean
 }
 

@@ -16,31 +16,13 @@ import {
 import { GameAudio } from './Audio'
 import { Ghost } from './Ghost'
 import { Input } from './Input'
+import { bestScore, submitRun } from './leaderboard'
 import { Maze } from './Maze'
 import { PacMan } from './PacMan'
 import { Renderer } from './Renderer'
 import type { GamePhase } from './types'
 
 const MAX_WALLS = 8
-const HIGH_SCORE_KEY = 'pacroundie-high-score'
-
-function loadHighScore(): number {
-  try {
-    const raw = localStorage.getItem(HIGH_SCORE_KEY)
-    const n = raw ? Number.parseInt(raw, 10) : 0
-    return Number.isFinite(n) && n > 0 ? n : 0
-  } catch {
-    return 0
-  }
-}
-
-function saveHighScore(score: number): void {
-  try {
-    localStorage.setItem(HIGH_SCORE_KEY, String(score))
-  } catch {
-    /* ignore quota / private mode */
-  }
-}
 
 export class Game {
   private maze = new Maze()
@@ -51,7 +33,7 @@ export class Game {
   private audio = new GameAudio()
 
   private score = 0
-  private highScore = loadHighScore()
+  private highScore = bestScore()
   private lives = 3
   private level = 1
   private phase: GamePhase = 'attract'
@@ -77,6 +59,10 @@ export class Game {
   private eyesAudioOn = false
   /** visualTime when the level-clear intermission began. */
   private wonAt = 0
+  private fruitsEaten = 0
+  private fruitKindsEaten = new Set<number>()
+  private ghostsEaten = 0
+  private runRecorded = false
 
   constructor(canvas: HTMLCanvasElement, shell: HTMLElement) {
     this.renderer = new Renderer(canvas)
@@ -94,10 +80,21 @@ export class Game {
 
   private noteScore(points: number): void {
     this.score += points
-    if (this.score > this.highScore) {
-      this.highScore = this.score
-      saveHighScore(this.highScore)
-    }
+    if (this.score > this.highScore) this.highScore = this.score
+  }
+
+  private recordRunIfNeeded(): void {
+    if (this.runRecorded || this.score <= 0) return
+    this.runRecorded = true
+    const entry = submitRun({
+      score: this.score,
+      level: this.level,
+      fruits: this.fruitsEaten,
+      fruitKinds: [...this.fruitKindsEaten],
+      ghosts: this.ghostsEaten,
+    })
+    this.highScore = bestScore()
+    void entry
   }
 
   /** Unlock audio on first gesture (browser autoplay policy). */
@@ -135,6 +132,7 @@ export class Game {
     this.score = 0
     this.lives = 3
     this.level = 1
+    this.highScore = bestScore()
     this.maze.prepareLevel(this.wallCountForLevel(1))
     this.resetActors(true)
     this.phase = 'attract'
@@ -151,6 +149,11 @@ export class Game {
   private beginGame(): void {
     this.score = 0
     this.lives = 3
+    this.fruitsEaten = 0
+    this.fruitKindsEaten.clear()
+    this.ghostsEaten = 0
+    this.runRecorded = false
+    this.highScore = bestScore()
     this.startLevel(1)
   }
 
@@ -300,6 +303,7 @@ export class Game {
       this.phaseTimer -= dt * 1000
       if (this.phaseTimer <= 0) {
         if (this.lives <= 0) {
+          this.recordRunIfNeeded()
           this.phase = 'gameover'
           this.phaseTimer = GAMEOVER_MS
         } else {
@@ -364,6 +368,8 @@ export class Game {
     const prize = this.maze.tryEatPrize(ring)
     if (prize) {
       this.noteScore(prize.points)
+      this.fruitsEaten++
+      this.fruitKindsEaten.add(prize.kind)
       this.prizeTimer = 0
       this.audio.playEatFruit()
     } else if (this.maze.prize?.active) {
@@ -455,6 +461,7 @@ export class Game {
       if (g.mode === 'frightened') {
         g.becomeEaten(this.maze)
         this.noteScore(this.ghostPoints)
+        this.ghostsEaten++
         this.ghostPoints *= 2
         this.eatFreeze = EAT_FREEZE_MS
         this.audio.playEatGhost()

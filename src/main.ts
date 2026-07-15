@@ -13,6 +13,9 @@ app.innerHTML = `
     <div class="display" id="display">
       <canvas id="game" width="336" height="336" aria-label="Pacroundie game"></canvas>
     </div>
+    <nav class="scores-nav">
+      <a class="nav-btn" href="./scores.html">HIGH SCORES</a>
+    </nav>
     <p class="help">
       <kbd>←</kbd><kbd>→</kbd> rotate the maze · <kbd>↑</kbd><kbd>↓</kbd> move through gaps<br />
       Pac-Man stays on the dial — align openings to travel rings<br />

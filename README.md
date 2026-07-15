@@ -1,23 +1,21 @@
 # Pacroundie
 
-A circular Pac-Man variant — Pac stays fixed at the bottom of the dial while you rotate the maze and move through the rings.
+Circular Pac-Man. Pac stays fixed at the bottom; you rotate the maze and move through the rings.
 
-**Play online:** [https://bjonesdeft.github.io/pacroundie/](https://bjonesdeft.github.io/pacroundie/)
+**Play:** https://bjonesdeft.github.io/pacroundie/  
+**High scores:** https://bjonesdeft.github.io/pacroundie/scores.html
 
 ## Controls
 
-- **← / →** or swipe — rotate the maze
-- **↑ / ↓** — move between rings
-- **Space / Enter / tap** — start from attract mode
+| Input | Action |
+| --- | --- |
+| ← → or swipe | Rotate maze |
+| ↑ ↓ | Change rings |
+| Space / Enter / tap | Start |
 
-## Local development
+## Run locally
 
 ```bash
 npm install
 npm run dev
-```
-
-```bash
-npm run build
-npm run preview
 ```

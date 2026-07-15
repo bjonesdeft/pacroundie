@@ -119,6 +119,31 @@ body {
   background: #12121c;
 }
 
+.scores-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.nav-btn {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border: 2px solid #ffff00;
+  color: #ffff00;
+  text-decoration: none;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 0, 0.06);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-btn:hover,
+.nav-btn:focus-visible {
+  background: #ffff00;
+  color: #000;
+  outline: none;
+}
+
 @media (max-width: 480px) {
   .brand p,
   .help {

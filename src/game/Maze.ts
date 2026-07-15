@@ -1,4 +1,5 @@
 import { PAC_RADIUS, PAC_SCREEN_ANGLE, PRIZE_POINTS, angleDelta, gapHalfAngle, normAngle } from './constants'
+import { fruitKindForLevel } from './leaderboard'
 import type { Gap, Pellet, Prize, RadialWall } from './types'
 
 function gapAt(mid: number, half: number): Gap {
@@ -324,6 +325,7 @@ export class Maze {
       ring,
       angle: PAC_SCREEN_ANGLE, // screen-fixed at bottom of the dial
       points: PRIZE_POINTS[idx],
+      kind: fruitKindForLevel(level),
       active: true,
     }
   }
