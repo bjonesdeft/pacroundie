@@ -1,0 +1,127 @@
+:root {
+  color-scheme: dark;
+  --bezel: #1a1a24;
+  --bezel-rim: #2a2a3a;
+  --bezel-highlight: #3d3d52;
+  --glass: #050508;
+  --glow: rgba(33, 33, 222, 0.35);
+  --text: #c8c8e0;
+  --muted: #6a6a88;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, #12121c 0%, #06060a 55%, #000 100%);
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+#app {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.brand {
+  text-align: center;
+  letter-spacing: 0.08em;
+}
+
+.brand h1 {
+  font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+  color: #ffff00;
+  text-shadow:
+    0 0 12px rgba(255, 255, 0, 0.35),
+    2px 2px 0 #c06000;
+}
+
+.brand p {
+  margin-top: 0.65rem;
+  font-size: 0.45rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+/* Round display chrome — watch / circular screen frame */
+.display {
+  position: relative;
+  width: min(92vw, 92vh, 420px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, var(--bezel-highlight), var(--bezel) 42%, #0c0c12 70%);
+  box-shadow:
+    0 0 0 2px #0a0a10,
+    0 0 0 6px var(--bezel-rim),
+    0 0 0 8px #050508,
+    0 18px 50px rgba(0, 0, 0, 0.65),
+    0 0 60px var(--glow);
+  display: grid;
+  place-items: center;
+  touch-action: none;
+}
+
+.display::before {
+  content: '';
+  position: absolute;
+  inset: 4.5%;
+  border-radius: 50%;
+  background: var(--glass);
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.85),
+    inset 0 0 0 1px rgba(33, 33, 222, 0.4);
+  pointer-events: none;
+}
+
+.display canvas {
+  position: relative;
+  z-index: 1;
+  width: 86%;
+  height: 86%;
+  border-radius: 50%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.help {
+  max-width: 22rem;
+  text-align: center;
+  font-size: 0.42rem;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.help kbd {
+  display: inline-block;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid #3a3a55;
+  border-radius: 3px;
+  color: var(--text);
+  background: #12121c;
+}
+
+@media (max-width: 480px) {
+  .brand p,
+  .help {
+    font-size: 0.38rem;
+  }
+}
