@@ -46,7 +46,8 @@ export const GAME_SPEED = 1.5625
 
 export const FRIGHTENED_MS = 7000
 export const READY_MS = 2200
-export const DEATH_MS = 1800
+/** Death melt + starburst (10% slower than the original 1800ms). */
+export const DEATH_MS = 1980
 /** Pause on GAME OVER before returning to attract. */
 export const GAMEOVER_MS = 2800
 
