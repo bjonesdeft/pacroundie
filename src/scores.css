@@ -21,6 +21,30 @@ body.scores-page #app {
   gap: 1rem;
 }
 
+@media (min-width: 900px) {
+  .scores-stage {
+    width: min(100%, 52rem);
+    gap: 1.35rem;
+  }
+
+  .scores-panel {
+    padding: 1.1rem 1rem 0.85rem;
+  }
+
+  .score-head,
+  .score-row {
+    padding: 0.55rem 0.55rem;
+  }
+
+  .score-head {
+    font-size: 0.4rem;
+  }
+
+  .score-row {
+    font-size: 0.48rem;
+  }
+}
+
 .scores-panel {
   width: 100%;
   border: 2px solid #2121de;

@@ -11,6 +11,12 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
+  /* Dial scales with viewport; desktop raises the cap */
+  --dial-size: min(
+    calc(100vw - var(--safe-left) - var(--safe-right) - 1.5rem),
+    calc(100dvh - var(--safe-top) - var(--safe-bottom) - 12rem),
+    420px
+  );
 }
 
 * {
@@ -53,7 +59,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  width: min(100%, 28rem);
+  width: min(100%, 72rem);
 }
 
 .brand {
@@ -63,7 +69,7 @@ body {
 }
 
 .brand h1 {
-  font-size: clamp(0.75rem, 2.5vw, 1.1rem);
+  font-size: clamp(0.85rem, 2.2vw, 1.45rem);
   color: #ffff00;
   text-shadow:
     0 0 12px rgba(255, 255, 0, 0.35),
@@ -72,15 +78,33 @@ body {
 
 .brand p {
   margin-top: 0.55rem;
-  font-size: 0.45rem;
+  font-size: clamp(0.38rem, 0.85vw, 0.55rem);
   line-height: 1.7;
   color: var(--muted);
 }
 
-/* Round display chrome — watch / circular screen frame */
+/* Desktop: dial + side rails. Mobile: dial stacks alone. */
+.play-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.rail {
+  display: none;
+}
+
+.scores-nav-mobile {
+  display: flex;
+}
+
+/* Round display chrome */
 .display {
   position: relative;
-  width: min(92vw, 56dvh, 420px);
+  width: var(--dial-size);
   aspect-ratio: 1;
   border-radius: 50%;
   background:
@@ -251,7 +275,7 @@ body {
 }
 
 .help {
-  max-width: 22rem;
+  max-width: 18rem;
   text-align: center;
   font-size: 0.42rem;
   line-height: 1.9;
@@ -265,10 +289,17 @@ body {
   border-radius: 3px;
   color: var(--text);
   background: #12121c;
+  margin: 0 0.1rem;
 }
 
 .help-touch {
   display: none;
+  max-width: 22rem;
+}
+
+.help-desktop {
+  display: block;
+  text-align: left;
 }
 
 .scores-nav {
@@ -301,78 +332,168 @@ body {
   outline: none;
 }
 
-/* Touch / coarse pointer: show pad + touch help, enlarge dial */
+/* —— Desktop / fine pointer: big dial + side rails —— */
+@media (hover: hover) and (pointer: fine) {
+  :root {
+    --dial-size: min(72vmin, calc(100dvh - 8rem), 640px);
+  }
+
+  .stage {
+    gap: 1.35rem;
+  }
+
+  .play-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+  }
+
+  .rail {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: min(16rem, 22vw);
+    min-width: 10rem;
+  }
+
+  .rail-left {
+    align-items: flex-end;
+  }
+
+  .rail-right {
+    align-items: flex-start;
+  }
+
+  .help-desktop {
+    font-size: clamp(0.4rem, 0.7vw, 0.5rem);
+    line-height: 2;
+  }
+
+  .scores-nav-mobile {
+    display: none;
+  }
+
+  .nav-btn {
+    font-size: 0.6rem;
+    min-height: 2.75rem;
+    padding: 0.65rem 1.25rem;
+  }
+}
+
+/* Extra-wide desktops */
+@media (hover: hover) and (pointer: fine) and (min-width: 1200px) {
+  :root {
+    --dial-size: min(74vmin, calc(100dvh - 7rem), 720px);
+  }
+
+  .brand h1 {
+    font-size: clamp(1.1rem, 1.6vw, 1.6rem);
+  }
+}
+
+/* —— Touch / coarse pointer: compact stack + joypad —— */
 @media (hover: none), (pointer: coarse) {
+  :root {
+    --dial-size: min(
+      calc(100vw - var(--safe-left) - var(--safe-right) - 1rem),
+      calc(100dvh - var(--safe-top) - var(--safe-bottom) - 14.5rem),
+      400px
+    );
+  }
+
+  .stage {
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .play-row {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .rail {
+    display: none;
+  }
+
   .help-desktop {
     display: none;
   }
 
   .help-touch {
     display: block;
+    font-size: 0.36rem;
   }
 
-  .display {
-    width: min(94vw - var(--safe-left) - var(--safe-right), 48dvh, 400px);
+  .scores-nav-mobile {
+    display: flex;
   }
 
   .brand p {
     font-size: 0.38rem;
   }
-
-  .help {
-    font-size: 0.36rem;
-  }
 }
 
-/* Short phones: prioritize dial + pad */
+/* Short phones (touch UI class set from JS) */
 @media (max-height: 720px) {
-  #app {
-    padding-top: max(0.4rem, var(--safe-top));
-    padding-bottom: max(0.4rem, var(--safe-bottom));
+  body.touch-ui #app {
+    padding-top: max(0.35rem, var(--safe-top));
+    padding-bottom: max(0.35rem, var(--safe-bottom));
   }
 
-  .stage {
-    gap: 0.55rem;
+  body.touch-ui .stage {
+    gap: 0.5rem;
   }
 
-  .brand p {
+  body.touch-ui .brand p {
     display: none;
   }
 
-  .display {
-    width: min(92vw - var(--safe-left) - var(--safe-right), 42dvh, 360px);
+  body.touch-ui {
+    --dial-size: min(
+      calc(100vw - var(--safe-left) - var(--safe-right) - 1rem),
+      calc(100dvh - var(--safe-top) - var(--safe-bottom) - 12.5rem),
+      360px
+    );
   }
 
-  .dpad {
+  body.touch-ui .dpad {
     width: 8.4rem;
     height: 8.4rem;
   }
 
-  .pad-btn {
+  body.touch-ui .pad-btn {
     font-size: 0.9rem;
   }
 }
 
 @media (max-height: 560px) {
-  .brand {
+  body.touch-ui .brand {
     display: none;
   }
 
-  .help {
+  body.touch-ui .help-touch {
     display: none;
   }
 
-  .scores-nav {
+  body.touch-ui .scores-nav-mobile {
     display: none;
   }
 
-  .display {
-    width: min(58vw, 46dvh, 300px);
+  body.touch-ui {
+    --dial-size: min(58vw, 42dvh, 280px);
   }
 
-  .dpad {
+  body.touch-ui .dpad {
     width: 7.6rem;
     height: 7.6rem;
+  }
+}
+
+/* Tall desktop windows: use more vertical space */
+@media (hover: hover) and (pointer: fine) and (min-height: 900px) {
+  :root {
+    --dial-size: min(70vmin, calc(100dvh - 7.5rem), 700px);
   }
 }
 
