@@ -29,7 +29,7 @@ export class Game {
   private pac: PacMan
   private ghosts: Ghost[]
   private renderer: Renderer
-  private input: Input
+  readonly input: Input
   private audio = new GameAudio()
 
   private score = 0
@@ -285,6 +285,9 @@ export class Game {
       if (this.phaseTimer <= 0 || this.input.consumeRestart()) this.enterAttract()
       return
     }
+
+    // Dial / START taps only matter in attract & game over
+    this.input.consumeRestart()
 
     if (this.phase === 'won') {
       if (this.visualTime - this.wonAt >= WON_TOTAL_S) this.startLevel(this.level + 1)

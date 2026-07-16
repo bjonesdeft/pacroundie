@@ -2,10 +2,17 @@
 
 body.scores-page {
   overflow: auto;
+  overscroll-behavior: contain;
+  height: auto;
+  min-height: 100dvh;
 }
 
 body.scores-page #app {
-  padding: 1.25rem 1rem 2rem;
+  padding:
+    max(1.25rem, env(safe-area-inset-top, 0px))
+    max(1rem, env(safe-area-inset-right, 0px))
+    max(2rem, env(safe-area-inset-bottom, 0px))
+    max(1rem, env(safe-area-inset-left, 0px));
   align-items: start;
 }
 
