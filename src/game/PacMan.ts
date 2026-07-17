@@ -12,7 +12,7 @@ const FACE_ANGLES: Record<Dir, number> = {
 /** How quickly Pac's mouth turns toward a new heading (rad/sec). */
 const FACE_TURN_SPEED = 14
 /** How quickly the maze rotates to center a gap before a radial cross. */
-const ALIGN_SPEED = 3.2
+const ALIGN_SPEED = 4.2
 
 export class PacMan {
   ring: number

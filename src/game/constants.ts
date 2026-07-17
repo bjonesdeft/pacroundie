@@ -36,6 +36,13 @@ export const GHOST_SPEED_MULT: Record<'blinky' | 'pinky' | 'inky' | 'clyde', num
 /** How close (radians) a ghost must be to a gap center before crossing. */
 export const GAP_ALIGN = 0.055
 
+/**
+ * Extra angular pad (radians) when Pac requests up/down through a ring hole.
+ * Wider than the visual gap so the move can commit a beat early; maze ease
+ * then centers the opening.
+ */
+export const PAC_CROSS_PAD = 0.09
+
 /** Half-angle of a ring gap, just wider than Pac at that wall radius. */
 export function gapHalfAngle(wallRadius: number): number {
   return (PAC_RADIUS * 1.2) / wallRadius

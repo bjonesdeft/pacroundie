@@ -18,7 +18,8 @@ app.innerHTML = `
           <kbd>↑</kbd><kbd>↓</kbd> move through gaps<br /><br />
           Pac stays on the dial — align openings to travel rings.<br /><br />
           Ghosts spawn in the center.<br />
-          <kbd>Space</kbd> / <kbd>Enter</kbd> start
+          <kbd>Space</kbd> / <kbd>Enter</kbd> start<br />
+          <kbd>M</kbd> maximize game
         </p>
       </aside>
 
@@ -46,7 +47,7 @@ app.innerHTML = `
 
     <p class="help help-touch">
       Hold the pad like arrow keys · ←→ spin · ↑↓ change rings<br />
-      START or tap the dial to begin
+      START or tap the dial to begin · <kbd>M</kbd> maximize
     </p>
 
     <nav class="scores-nav scores-nav-mobile">
@@ -60,13 +61,46 @@ const display = document.querySelector<HTMLElement>('#display')
 const touchPad = document.querySelector<HTMLElement>('#touch-pad')
 if (!canvas || !display || !touchPad) throw new Error('Game elements missing')
 
+const CHROME_KEY = 'pacroundie-chrome'
 const touchUi = window.matchMedia('(hover: none), (pointer: coarse)')
+
+const readChrome = (): boolean => {
+  try {
+    const raw = localStorage.getItem(CHROME_KEY)
+    if (raw === '0') return false
+    if (raw === '1') return true
+  } catch {
+    /* ignore */
+  }
+  return true
+}
+
+const applyChrome = (showChrome: boolean) => {
+  document.body.classList.toggle('game-max', !showChrome)
+  try {
+    localStorage.setItem(CHROME_KEY, showChrome ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+let showChrome = readChrome()
+applyChrome(showChrome)
+
 const syncPad = () => {
   touchPad.hidden = !touchUi.matches
   document.body.classList.toggle('touch-ui', touchUi.matches)
 }
 syncPad()
 touchUi.addEventListener('change', syncPad)
+
+window.addEventListener('keydown', (e) => {
+  if (e.key !== 'm' && e.key !== 'M') return
+  if (e.repeat) return
+  e.preventDefault()
+  showChrome = !showChrome
+  applyChrome(showChrome)
+})
 
 const game = new Game(canvas, display)
 game.input.bindPad(touchPad)

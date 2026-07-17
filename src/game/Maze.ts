@@ -1,4 +1,12 @@
-import { PAC_RADIUS, PAC_SCREEN_ANGLE, PRIZE_POINTS, angleDelta, gapHalfAngle, normAngle } from './constants'
+import {
+  PAC_CROSS_PAD,
+  PAC_RADIUS,
+  PAC_SCREEN_ANGLE,
+  PRIZE_POINTS,
+  angleDelta,
+  gapHalfAngle,
+  normAngle,
+} from './constants'
 import { fruitKindForLevel } from './leaderboard'
 import type { Gap, Pellet, Prize, RadialWall } from './types'
 
@@ -167,12 +175,13 @@ export class Maze {
   }
 
   canPacCross(fromRing: number, towardInner: boolean, localAngle: number): boolean {
+    // Generous pad: accept up/down a little before Pac is dead-center in the hole
     if (towardInner) {
       if (fromRing <= 0) return false
-      return this.inGap(fromRing, localAngle)
+      return this.inGap(fromRing, localAngle, PAC_CROSS_PAD)
     }
     if (fromRing >= this.ringCount - 1) return false
-    return this.inGap(fromRing + 1, localAngle)
+    return this.inGap(fromRing + 1, localAngle, PAC_CROSS_PAD)
   }
 
   wallIndexForPacCross(fromRing: number, towardInner: boolean): number {

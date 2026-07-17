@@ -12,6 +12,7 @@ Circular Pac-Man. Pac stays fixed at the bottom; you rotate the maze and move th
 | ← → / pad left-right | Rotate maze (hold) |
 | ↑ ↓ / pad up-down | Change rings (hold) |
 | Space / Enter / START / tap dial | Start |
+| M | Toggle maximized game / full chrome |
 
 ## Run locally
 

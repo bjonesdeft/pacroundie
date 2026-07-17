@@ -503,3 +503,54 @@ body {
     font-size: 0.36rem;
   }
 }
+
+/* —— Maximized: dial only (M toggles) —— */
+body.game-max #app {
+  padding:
+    max(0.25rem, var(--safe-top))
+    max(0.25rem, var(--safe-right))
+    max(0.25rem, var(--safe-bottom))
+    max(0.25rem, var(--safe-left));
+}
+
+body.game-max .stage {
+  gap: 0.45rem;
+  width: 100%;
+  max-width: none;
+}
+
+body.game-max .brand,
+body.game-max .rail,
+body.game-max .help,
+body.game-max .scores-nav {
+  display: none !important;
+}
+
+body.game-max .play-row {
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Desktop max: fill the viewport with the dial */
+body.game-max:not(.touch-ui) {
+  --dial-size: min(
+    calc(100vw - var(--safe-left) - var(--safe-right) - 0.5rem),
+    calc(100dvh - var(--safe-top) - var(--safe-bottom) - 0.5rem)
+  );
+}
+
+body.game-max:not(.touch-ui) .joypad {
+  display: none !important;
+}
+
+/* Touch max: dial + pad only */
+body.game-max.touch-ui {
+  --dial-size: min(
+    calc(100vw - var(--safe-left) - var(--safe-right) - 0.5rem),
+    calc(100dvh - var(--safe-top) - var(--safe-bottom) - 10.5rem)
+  );
+}
+
+body.game-max.touch-ui .joypad {
+  display: flex;
+}
