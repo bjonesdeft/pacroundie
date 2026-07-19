@@ -16,13 +16,18 @@ import {
 import { GameAudio } from './Audio'
 import { Ghost } from './Ghost'
 import { Input } from './Input'
-import { bestScore, submitRun } from './leaderboard'
+import { bestScore, qualifiesForBoard, submitRun } from './leaderboard'
 import { Maze } from './Maze'
 import { PacMan } from './PacMan'
 import { Renderer } from './Renderer'
 import type { GamePhase } from './types'
 
 const MAX_WALLS = 8
+
+export type HighScorePrompt = (
+  info: { score: number; level: number },
+  done: (name: string) => void,
+) => void
 
 export class Game {
   private maze = new Maze()
@@ -59,10 +64,9 @@ export class Game {
   private eyesAudioOn = false
   /** visualTime when the level-clear intermission began. */
   private wonAt = 0
-  private fruitsEaten = 0
-  private fruitKindsEaten = new Set<number>()
-  private ghostsEaten = 0
   private runRecorded = false
+  /** Host UI prompts for initials when a run makes the top ten. */
+  onHighScore: HighScorePrompt | null = null
 
   constructor(canvas: HTMLCanvasElement, shell: HTMLElement) {
     this.renderer = new Renderer(canvas)
@@ -83,18 +87,33 @@ export class Game {
     if (this.score > this.highScore) this.highScore = this.score
   }
 
+  private finishGameOver(): void {
+    this.phase = 'gameover'
+    this.phaseTimer = GAMEOVER_MS
+  }
+
   private recordRunIfNeeded(): void {
-    if (this.runRecorded || this.score <= 0) return
+    if (this.runRecorded || this.score <= 0) {
+      this.finishGameOver()
+      return
+    }
     this.runRecorded = true
-    const entry = submitRun({
-      score: this.score,
-      level: this.level,
-      fruits: this.fruitsEaten,
-      fruitKinds: [...this.fruitKindsEaten],
-      ghosts: this.ghostsEaten,
+
+    if (!qualifiesForBoard(this.score) || !this.onHighScore) {
+      this.highScore = bestScore()
+      this.finishGameOver()
+      return
+    }
+
+    this.phase = 'nameentry'
+    const score = this.score
+    const level = this.level
+    this.onHighScore({ score, level }, (name) => {
+      if (this.phase !== 'nameentry') return
+      submitRun({ score, level, name })
+      this.highScore = bestScore()
+      this.finishGameOver()
     })
-    this.highScore = bestScore()
-    void entry
   }
 
   /** Unlock audio on first gesture (browser autoplay policy). */
@@ -149,9 +168,6 @@ export class Game {
   private beginGame(): void {
     this.score = 0
     this.lives = 3
-    this.fruitsEaten = 0
-    this.fruitKindsEaten.clear()
-    this.ghostsEaten = 0
     this.runRecorded = false
     this.highScore = bestScore()
     this.startLevel(1)
@@ -286,6 +302,12 @@ export class Game {
       return
     }
 
+    if (this.phase === 'nameentry') {
+      // Wait for the host name prompt; ignore start taps
+      this.input.consumeRestart()
+      return
+    }
+
     // Dial / START taps only matter in attract & game over
     this.input.consumeRestart()
 
@@ -307,8 +329,6 @@ export class Game {
       if (this.phaseTimer <= 0) {
         if (this.lives <= 0) {
           this.recordRunIfNeeded()
-          this.phase = 'gameover'
-          this.phaseTimer = GAMEOVER_MS
         } else {
           this.resetActors(false, true)
           this.phase = 'ready'
@@ -371,8 +391,6 @@ export class Game {
     const prize = this.maze.tryEatPrize(ring)
     if (prize) {
       this.noteScore(prize.points)
-      this.fruitsEaten++
-      this.fruitKindsEaten.add(prize.kind)
       this.prizeTimer = 0
       this.audio.playEatFruit()
     } else if (this.maze.prize?.active) {
@@ -464,7 +482,6 @@ export class Game {
       if (g.mode === 'frightened') {
         g.becomeEaten(this.maze)
         this.noteScore(this.ghostPoints)
-        this.ghostsEaten++
         this.ghostPoints *= 2
         this.eatFreeze = EAT_FREEZE_MS
         this.audio.playEatGhost()

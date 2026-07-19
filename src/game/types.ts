@@ -4,7 +4,14 @@ export type GhostMode = 'scatter' | 'chase' | 'frightened' | 'eaten' | 'house'
 
 export type GhostName = 'blinky' | 'pinky' | 'inky' | 'clyde'
 
-export type GamePhase = 'attract' | 'ready' | 'playing' | 'dying' | 'won' | 'gameover'
+export type GamePhase =
+  | 'attract'
+  | 'ready'
+  | 'playing'
+  | 'dying'
+  | 'won'
+  | 'nameentry'
+  | 'gameover'
 
 /** Angular gap in a ring wall, in maze-local radians [0, 2π). */
 export interface Gap {
