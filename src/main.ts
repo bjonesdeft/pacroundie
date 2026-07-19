@@ -8,31 +8,14 @@ if (!app) throw new Error('#app missing')
 app.innerHTML = `
   <div class="stage">
     <header class="brand">
-      <h1>PACROUNDIE</h1>
-      <p>PAC-MAN FOR A ROUND DISPLAY</p>
+      <h1>ORBI-PAC</h1>
+      <p>SPIN THE MAZE · CHOMP THE RINGS</p>
     </header>
 
     <div class="play-row">
-      <aside class="rail rail-left">
-        <p class="help help-desktop">
-          <kbd>←</kbd><kbd>→</kbd> rotate the maze<br />
-          <kbd>↑</kbd><kbd>↓</kbd> move through gaps<br /><br />
-          Pac stays on the dial — align openings to travel rings.<br /><br />
-          Ghosts spawn in the center.<br />
-          <kbd>Space</kbd> / <kbd>Enter</kbd> start<br />
-          <kbd>M</kbd> maximize game
-        </p>
-      </aside>
-
       <div class="display" id="display">
-        <canvas id="game" width="336" height="336" aria-label="Pacroundie game"></canvas>
+        <canvas id="game" width="336" height="336" aria-label="Orbi-Pac game"></canvas>
       </div>
-
-      <aside class="rail rail-right">
-        <nav class="scores-nav">
-          <a class="nav-btn" href="./scores.html">HIGH SCORES</a>
-        </nav>
-      </aside>
     </div>
 
     <div class="joypad" id="touch-pad" aria-label="Game pad" hidden>
@@ -46,14 +29,26 @@ app.innerHTML = `
       <button type="button" class="start-btn" data-action="start" aria-label="Start">START</button>
     </div>
 
-    <p class="help help-touch">
-      Hold the pad like arrow keys · ←→ spin · ↑↓ change rings<br />
-      START or tap the dial to begin · <kbd>M</kbd> maximize
-    </p>
-
-    <nav class="scores-nav scores-nav-mobile">
+    <nav class="action-bar" aria-label="Game links">
+      <button type="button" class="nav-btn" id="how-btn">HOW TO PLAY</button>
       <a class="nav-btn" href="./scores.html">HIGH SCORES</a>
     </nav>
+  </div>
+
+  <div class="help-overlay" id="help-overlay" hidden>
+    <div class="help-card" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <p class="help-title" id="help-title">HOW TO PLAY</p>
+      <div class="help-body">
+        <p>Pac stays on the dial. Align openings to travel between rings.</p>
+        <p><kbd>←</kbd><kbd>→</kbd> rotate the maze</p>
+        <p><kbd>↑</kbd><kbd>↓</kbd> move through gaps</p>
+        <p class="help-touch-line">On touch: hold the pad like arrow keys.</p>
+        <p>Ghosts spawn in the center.</p>
+        <p><kbd>Space</kbd> / <kbd>Enter</kbd> / START / tap dial — start</p>
+        <p><kbd>M</kbd> maximize game</p>
+      </div>
+      <button type="button" class="nav-btn" id="help-close">GOT IT</button>
+    </div>
   </div>
 
   <div class="name-overlay" id="name-overlay" hidden>
@@ -79,11 +74,25 @@ app.innerHTML = `
 const canvas = document.querySelector<HTMLCanvasElement>('#game')
 const display = document.querySelector<HTMLElement>('#display')
 const touchPad = document.querySelector<HTMLElement>('#touch-pad')
+const howBtn = document.querySelector<HTMLButtonElement>('#how-btn')
+const helpOverlay = document.querySelector<HTMLElement>('#help-overlay')
+const helpClose = document.querySelector<HTMLButtonElement>('#help-close')
 const nameOverlay = document.querySelector<HTMLElement>('#name-overlay')
 const nameForm = document.querySelector<HTMLFormElement>('#name-form')
 const nameInput = document.querySelector<HTMLInputElement>('#name-input')
 const nameStats = document.querySelector<HTMLElement>('#name-stats')
-if (!canvas || !display || !touchPad || !nameOverlay || !nameForm || !nameInput || !nameStats) {
+if (
+  !canvas ||
+  !display ||
+  !touchPad ||
+  !howBtn ||
+  !helpOverlay ||
+  !helpClose ||
+  !nameOverlay ||
+  !nameForm ||
+  !nameInput ||
+  !nameStats
+) {
   throw new Error('Game elements missing')
 }
 
@@ -120,7 +129,30 @@ const syncPad = () => {
 syncPad()
 touchUi.addEventListener('change', syncPad)
 
+const openHelp = () => {
+  helpOverlay.hidden = false
+  document.body.classList.add('help-open')
+  helpClose.focus()
+}
+
+const closeHelp = () => {
+  helpOverlay.hidden = true
+  document.body.classList.remove('help-open')
+  howBtn.focus()
+}
+
+howBtn.addEventListener('click', openHelp)
+helpClose.addEventListener('click', closeHelp)
+helpOverlay.addEventListener('click', (e) => {
+  if (e.target === helpOverlay) closeHelp()
+})
+
 window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !helpOverlay.hidden) {
+    e.preventDefault()
+    closeHelp()
+    return
+  }
   if (e.key !== 'm' && e.key !== 'M') return
   if (e.repeat) return
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
