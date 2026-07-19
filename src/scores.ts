@@ -34,7 +34,7 @@ function render(board: ScoreEntry[]): void {
   root.innerHTML = `
     <div class="stage scores-stage">
       <header class="brand">
-        <h1>PACROUNDIE</h1>
+        <h1>ORBI-PAC</h1>
         <p>HIGH SCORES · TOP TEN</p>
       </header>
 
@@ -50,7 +50,7 @@ function render(board: ScoreEntry[]): void {
         </ol>
       </div>
 
-      <nav class="scores-nav">
+      <nav class="action-bar">
         <a class="nav-btn" href="./">PLAY</a>
       </nav>
     </div>

@@ -1,4 +1,4 @@
-# Pacroundie
+# Orbi-Pac
 
 Circular Pac-Man. Pac stays fixed at the bottom; you rotate the maze and move through the rings.
 

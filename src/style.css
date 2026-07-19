@@ -14,7 +14,7 @@
   /* Dial scales with viewport; desktop raises the cap */
   --dial-size: min(
     calc(100vw - var(--safe-left) - var(--safe-right) - 1.5rem),
-    calc(100dvh - var(--safe-top) - var(--safe-bottom) - 12rem),
+    calc(100dvh - var(--safe-top) - var(--safe-bottom) - 10.5rem),
     420px
   );
 }
@@ -83,22 +83,12 @@ body {
   color: var(--muted);
 }
 
-/* Desktop: dial + side rails. Mobile: dial stacks alone. */
 .play-row {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
   width: 100%;
-}
-
-.rail {
-  display: none;
-}
-
-.scores-nav-mobile {
-  display: flex;
 }
 
 /* Round display chrome */
@@ -274,42 +264,16 @@ body {
     0 1px 0 #120804;
 }
 
-.help {
-  max-width: 18rem;
-  text-align: center;
-  font-size: 0.42rem;
-  line-height: 1.9;
-  color: var(--muted);
-}
-
-.help kbd {
-  display: inline-block;
-  padding: 0.15rem 0.35rem;
-  border: 1px solid #3a3a55;
-  border-radius: 3px;
-  color: var(--text);
-  background: #12121c;
-  margin: 0 0.1rem;
-}
-
-.help-touch {
-  display: none;
-  max-width: 22rem;
-}
-
-.help-desktop {
-  display: block;
-  text-align: left;
-}
-
-.scores-nav {
+.action-bar {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
   flex-shrink: 0;
 }
 
 .nav-btn {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -317,12 +281,14 @@ body {
   border: 2px solid #ffff00;
   color: #ffff00;
   text-decoration: none;
-  font-size: 0.55rem;
+  font: inherit;
+  font-size: 0.5rem;
   letter-spacing: 0.08em;
   background: rgba(255, 255, 0, 0.06);
   transition: background 0.15s ease, color 0.15s ease;
   min-height: 2.5rem;
   line-height: 1.4;
+  cursor: pointer;
 }
 
 .nav-btn:hover,
@@ -332,59 +298,102 @@ body {
   outline: none;
 }
 
-/* —— Desktop / fine pointer: big dial + side rails —— */
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.help-overlay[hidden] {
+  display: none !important;
+}
+
+.help-card {
+  width: min(100%, 20rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.25rem 1.1rem 1.1rem;
+  border: 2px solid #ffff00;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 255, 0, 0.12), transparent 55%),
+    #08080f;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+.help-title {
+  color: #ffff00;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+}
+
+.help-body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  text-align: left;
+  font-size: 0.42rem;
+  line-height: 1.85;
+  color: var(--muted);
+}
+
+.help-body p {
+  margin: 0;
+}
+
+.help-body kbd {
+  display: inline-block;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid #3a3a55;
+  border-radius: 3px;
+  color: var(--text);
+  background: #12121c;
+  margin: 0 0.12rem 0 0;
+}
+
+.help-touch-line {
+  display: none;
+}
+
+body.touch-ui .help-touch-line {
+  display: block;
+}
+
+body.help-open .joypad {
+  pointer-events: none;
+}
+
+/* —— Desktop / fine pointer: bigger dial —— */
 @media (hover: hover) and (pointer: fine) {
   :root {
-    --dial-size: min(72vmin, calc(100dvh - 8rem), 640px);
+    --dial-size: min(72vmin, calc(100dvh - 9rem), 640px);
   }
 
   .stage {
     gap: 1.35rem;
   }
 
-  .play-row {
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(1.5rem, 4vw, 3.5rem);
-  }
-
-  .rail {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    width: min(16rem, 22vw);
-    min-width: 10rem;
-  }
-
-  .rail-left {
-    align-items: flex-end;
-  }
-
-  .rail-right {
-    align-items: flex-start;
-  }
-
-  .help-desktop {
-    font-size: clamp(0.4rem, 0.7vw, 0.5rem);
-    line-height: 2;
-  }
-
-  .scores-nav-mobile {
-    display: none;
-  }
-
   .nav-btn {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     min-height: 2.75rem;
     padding: 0.65rem 1.25rem;
+  }
+
+  .help-body {
+    font-size: 0.48rem;
   }
 }
 
 /* Extra-wide desktops */
 @media (hover: hover) and (pointer: fine) and (min-width: 1200px) {
   :root {
-    --dial-size: min(74vmin, calc(100dvh - 7rem), 720px);
+    --dial-size: min(74vmin, calc(100dvh - 8rem), 720px);
   }
 
   .brand h1 {
@@ -397,7 +406,7 @@ body {
   :root {
     --dial-size: min(
       calc(100vw - var(--safe-left) - var(--safe-right) - 1rem),
-      calc(100dvh - var(--safe-top) - var(--safe-bottom) - 14.5rem),
+      calc(100dvh - var(--safe-top) - var(--safe-bottom) - 13.5rem),
       400px
     );
   }
@@ -407,30 +416,17 @@ body {
     width: 100%;
   }
 
-  .play-row {
-    flex-direction: column;
-    gap: 0.65rem;
-  }
-
-  .rail {
-    display: none;
-  }
-
-  .help-desktop {
-    display: none;
-  }
-
-  .help-touch {
-    display: block;
-    font-size: 0.36rem;
-  }
-
-  .scores-nav-mobile {
-    display: flex;
-  }
-
   .brand p {
     font-size: 0.38rem;
+  }
+
+  .action-bar {
+    gap: 0.55rem;
+  }
+
+  .nav-btn {
+    font-size: 0.42rem;
+    padding: 0.5rem 0.75rem;
   }
 }
 
@@ -472,14 +468,6 @@ body {
     display: none;
   }
 
-  body.touch-ui .help-touch {
-    display: none;
-  }
-
-  body.touch-ui .scores-nav-mobile {
-    display: none;
-  }
-
   body.touch-ui {
     --dial-size: min(58vw, 42dvh, 280px);
   }
@@ -498,8 +486,7 @@ body {
 }
 
 @media (max-width: 480px) {
-  .brand p,
-  .help {
+  .brand p {
     font-size: 0.36rem;
   }
 }
@@ -520,14 +507,11 @@ body.game-max .stage {
 }
 
 body.game-max .brand,
-body.game-max .rail,
-body.game-max .help,
-body.game-max .scores-nav {
+body.game-max .action-bar {
   display: none !important;
 }
 
 body.game-max .play-row {
-  flex-direction: column;
   gap: 0;
 }
 
