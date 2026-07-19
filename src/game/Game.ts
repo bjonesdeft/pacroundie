@@ -87,7 +87,13 @@ export class Game {
     if (this.score > this.highScore) this.highScore = this.score
   }
 
+  /** Display high only rises — board best or this run's score, never drops. */
+  private syncHighScore(): void {
+    this.highScore = Math.max(this.highScore, this.score, bestScore())
+  }
+
   private finishGameOver(): void {
+    this.syncHighScore()
     this.phase = 'gameover'
     this.phaseTimer = GAMEOVER_MS
   }
@@ -100,7 +106,6 @@ export class Game {
     this.runRecorded = true
 
     if (!qualifiesForBoard(this.score) || !this.onHighScore) {
-      this.highScore = bestScore()
       this.finishGameOver()
       return
     }
@@ -111,7 +116,6 @@ export class Game {
     this.onHighScore({ score, level }, (name) => {
       if (this.phase !== 'nameentry') return
       submitRun({ score, level, name })
-      this.highScore = bestScore()
       this.finishGameOver()
     })
   }
@@ -148,10 +152,10 @@ export class Game {
 
   /** Title / demo loop — ghosts roam, waiting for PRESS START. */
   private enterAttract(): void {
+    this.syncHighScore()
     this.score = 0
     this.lives = 3
     this.level = 1
-    this.highScore = bestScore()
     this.maze.prepareLevel(this.wallCountForLevel(1))
     this.resetActors(true)
     this.phase = 'attract'
@@ -166,10 +170,10 @@ export class Game {
 
   /** Leave attract and begin a real run (jingle → play). */
   private beginGame(): void {
+    this.syncHighScore()
     this.score = 0
     this.lives = 3
     this.runRecorded = false
-    this.highScore = bestScore()
     this.startLevel(1)
   }
 
