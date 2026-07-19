@@ -1,5 +1,6 @@
 import './style.css'
 import { Game } from './game/Game'
+import { NAME_MAX_LEN } from './game/leaderboard'
 
 const app = document.querySelector<HTMLDivElement>('#app')
 if (!app) throw new Error('#app missing')
@@ -54,12 +55,37 @@ app.innerHTML = `
       <a class="nav-btn" href="./scores.html">HIGH SCORES</a>
     </nav>
   </div>
+
+  <div class="name-overlay" id="name-overlay" hidden>
+    <form class="name-card" id="name-form">
+      <p class="name-title">HIGH SCORE</p>
+      <p class="name-stats" id="name-stats"></p>
+      <label class="name-label" for="name-input">ENTER YOUR NAME</label>
+      <input
+        id="name-input"
+        class="name-input"
+        name="player"
+        maxlength="${NAME_MAX_LEN}"
+        autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
+        required
+      />
+      <button type="submit" class="nav-btn name-submit">SAVE</button>
+    </form>
+  </div>
 `
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game')
 const display = document.querySelector<HTMLElement>('#display')
 const touchPad = document.querySelector<HTMLElement>('#touch-pad')
-if (!canvas || !display || !touchPad) throw new Error('Game elements missing')
+const nameOverlay = document.querySelector<HTMLElement>('#name-overlay')
+const nameForm = document.querySelector<HTMLFormElement>('#name-form')
+const nameInput = document.querySelector<HTMLInputElement>('#name-input')
+const nameStats = document.querySelector<HTMLElement>('#name-stats')
+if (!canvas || !display || !touchPad || !nameOverlay || !nameForm || !nameInput || !nameStats) {
+  throw new Error('Game elements missing')
+}
 
 const CHROME_KEY = 'pacroundie-chrome'
 const touchUi = window.matchMedia('(hover: none), (pointer: coarse)')
@@ -97,6 +123,7 @@ touchUi.addEventListener('change', syncPad)
 window.addEventListener('keydown', (e) => {
   if (e.key !== 'm' && e.key !== 'M') return
   if (e.repeat) return
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
   e.preventDefault()
   showChrome = !showChrome
   applyChrome(showChrome)
@@ -104,4 +131,24 @@ window.addEventListener('keydown', (e) => {
 
 const game = new Game(canvas, display)
 game.input.bindPad(touchPad)
+
+game.onHighScore = (info, done) => {
+  nameStats.textContent = `SCORE ${String(info.score).padStart(5, '0')} · L${info.level}`
+  nameInput.value = ''
+  nameOverlay.hidden = false
+  document.body.classList.add('name-entry-open')
+  window.setTimeout(() => nameInput.focus(), 30)
+
+  const finish = (name: string) => {
+    nameOverlay.hidden = true
+    document.body.classList.remove('name-entry-open')
+    done(name)
+  }
+
+  nameForm.onsubmit = (e) => {
+    e.preventDefault()
+    finish(nameInput.value)
+  }
+}
+
 game.start()

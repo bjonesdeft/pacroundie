@@ -606,6 +606,10 @@ export class Renderer {
       ctx.fillStyle = COLORS.ready
       ctx.font = 'bold 12px "Press Start 2P", "Courier New", monospace'
       ctx.fillText('READY!', CX, CY + 8)
+    } else if (phase === 'nameentry') {
+      ctx.fillStyle = COLORS.ready
+      ctx.font = 'bold 9px "Press Start 2P", "Courier New", monospace'
+      ctx.fillText('HIGH SCORE!', CX, CY + 8)
     } else if (phase === 'gameover') {
       ctx.fillStyle = '#ff0000'
       ctx.font = 'bold 11px "Press Start 2P", "Courier New", monospace'
