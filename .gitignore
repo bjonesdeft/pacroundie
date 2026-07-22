@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Native (Xcode)
+native/OrbiPac/Web
+native/**/xcuserdata/
+native/**/DerivedData/
+native/*.xcworkspace
+!native/*.xcodeproj/project.pbxproj
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -20,3 +20,12 @@ Circular Pac-Man. Pac stays fixed at the bottom; you rotate the maze and move th
 npm install
 npm run dev
 ```
+
+## Native iOS / macOS
+
+SwiftUI + WKWebView shell lives in [`native/`](native/README.md):
+
+```bash
+npm run build:native
+open native/OrbiPac.xcodeproj
+```
