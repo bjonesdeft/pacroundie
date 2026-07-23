@@ -9,8 +9,8 @@ Circular Pac-Man. Pac stays fixed at the bottom; you rotate the maze and move th
 
 | Input | Action |
 | --- | --- |
-| ← → / pad left-right | Rotate maze (hold) |
-| ↑ ↓ / pad up-down | Change rings (hold) |
+| ← → / thumbstick left-right | Rotate maze (hold) |
+| ↑ ↓ / thumbstick up-down | Change rings (hold) |
 | Space / Enter / START / tap dial | Start |
 | M | Toggle maximized game / full chrome |
 
@@ -19,4 +19,12 @@ Circular Pac-Man. Pac stays fixed at the bottom; you rotate the maze and move th
 ```bash
 npm install
 npm run dev
+```
+
+## Native iOS / macOS
+
+Fully native Swift port (Core Graphics + SwiftUI) lives in [`native/`](native/README.md):
+
+```bash
+open native/OrbiPac.xcodeproj
 ```

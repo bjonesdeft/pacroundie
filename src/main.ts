@@ -19,12 +19,19 @@ app.innerHTML = `
     </div>
 
     <div class="joypad" id="touch-pad" aria-label="Game pad" hidden>
-      <div class="dpad" role="group" aria-label="Direction pad">
-        <button type="button" class="pad-btn pad-up" data-dir="up" aria-label="Up">▲</button>
-        <button type="button" class="pad-btn pad-left" data-dir="left" aria-label="Left">◀</button>
-        <button type="button" class="pad-btn pad-center" tabindex="-1" aria-hidden="true"></button>
-        <button type="button" class="pad-btn pad-right" data-dir="right" aria-label="Right">▶</button>
-        <button type="button" class="pad-btn pad-down" data-dir="down" aria-label="Down">▼</button>
+      <div
+        class="stick"
+        id="thumb-stick"
+        role="group"
+        aria-label="Thumbstick — drag to move"
+      >
+        <div class="stick-base" aria-hidden="true">
+          <span class="stick-mark stick-mark-up">▲</span>
+          <span class="stick-mark stick-mark-left">◀</span>
+          <span class="stick-mark stick-mark-right">▶</span>
+          <span class="stick-mark stick-mark-down">▼</span>
+        </div>
+        <div class="stick-knob" id="stick-knob" aria-hidden="true"></div>
       </div>
       <button type="button" class="start-btn" data-action="start" aria-label="Start">START</button>
     </div>
@@ -42,7 +49,7 @@ app.innerHTML = `
         <p>Pac stays on the dial. Align openings to travel between rings.</p>
         <p><kbd>←</kbd><kbd>→</kbd> rotate the maze</p>
         <p><kbd>↑</kbd><kbd>↓</kbd> move through gaps</p>
-        <p class="help-touch-line">On touch: hold the pad like arrow keys.</p>
+        <p class="help-touch-line">On touch: drag the thumbstick and hold a direction.</p>
         <p>Ghosts spawn in the center.</p>
         <p><kbd>Space</kbd> / <kbd>Enter</kbd> / START / tap dial — start</p>
         <p><kbd>M</kbd> maximize game</p>
