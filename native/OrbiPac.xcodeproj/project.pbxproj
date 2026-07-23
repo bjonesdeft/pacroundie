@@ -3,26 +3,26 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
-
-/* Begin PBXBuildFile section */
-		A10000000000000000000040 /* OrbiPacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000010 /* OrbiPacApp.swift */; };
-		A10000000000000000000041 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* ContentView.swift */; };
-		A10000000000000000000042 /* GameWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* GameWebView.swift */; };
-		A10000000000000000000043 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* Assets.xcassets */; };
-		A10000000000000000000044 /* Web in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* Web */; };
-/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A10000000000000000000006 /* OrbiPac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OrbiPac.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A10000000000000000000010 /* OrbiPacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbiPacApp.swift; sourceTree = "<group>"; };
-		A10000000000000000000011 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		A10000000000000000000012 /* GameWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameWebView.swift; sourceTree = "<group>"; };
-		A10000000000000000000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		A10000000000000000000014 /* Web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Web; sourceTree = "<group>"; };
-		A10000000000000000000015 /* OrbiPac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OrbiPac.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A10000000000000000000070 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Web,
+			);
+			target = A10000000000000000000002 /* OrbiPac */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		A10000000000000000000032 /* OrbiPac */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A10000000000000000000070 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = OrbiPac; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A10000000000000000000005 /* Frameworks */ = {
@@ -51,19 +51,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A10000000000000000000032 /* OrbiPac */ = {
-			isa = PBXGroup;
-			children = (
-				A10000000000000000000010 /* OrbiPacApp.swift */,
-				A10000000000000000000011 /* ContentView.swift */,
-				A10000000000000000000012 /* GameWebView.swift */,
-				A10000000000000000000013 /* Assets.xcassets */,
-				A10000000000000000000014 /* Web */,
-				A10000000000000000000015 /* OrbiPac.entitlements */,
-			);
-			path = OrbiPac;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -71,7 +58,6 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A10000000000000000000052 /* Build configuration list for PBXNativeTarget "OrbiPac" */;
 			buildPhases = (
-				A10000000000000000000060 /* Sync Web Build */,
 				A10000000000000000000003 /* Sources */,
 				A10000000000000000000005 /* Frameworks */,
 				A10000000000000000000004 /* Resources */,
@@ -79,6 +65,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A10000000000000000000032 /* OrbiPac */,
 			);
 			name = OrbiPac;
 			productName = OrbiPac;
@@ -118,37 +107,11 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		A10000000000000000000060 /* Sync Web Build */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Sync Web Build";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/OrbiPac/Web/index.html",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -e\nREPO_ROOT=\"${SRCROOT}/..\"\ncd \"$REPO_ROOT\"\nif [ ! -f package.json ]; then\n  echo \"error: package.json not found at $REPO_ROOT\" >&2\n  exit 1\nfi\nif ! command -v npm >/dev/null 2>&1; then\n  if [ -f \"${SRCROOT}/OrbiPac/Web/index.html\" ]; then\n    echo \"note: npm not found; using existing Web bundle\"\n    exit 0\n  fi\n  echo \"error: npm is required to build the Orbi-Pac web bundle\" >&2\n  exit 1\nfi\nnpm run build:native\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXResourcesBuildPhase section */
 		A10000000000000000000004 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000043 /* Assets.xcassets in Resources */,
-				A10000000000000000000044 /* Web in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -159,9 +122,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000040 /* OrbiPacApp.swift in Sources */,
-				A10000000000000000000041 /* ContentView.swift in Sources */,
-				A10000000000000000000042 /* GameWebView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -214,14 +174,16 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = OrbiPac/OrbiPac.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = VHXNTG6D8G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Orbi-Pac";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Orbi-Pac uses the gyroscope so you can tilt to steer and keep the playfield steady.";
+				INFOPLIST_KEY_UIAppFonts = "PressStart2P-Regular.ttf";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarHidden = YES;
@@ -256,14 +218,16 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = OrbiPac/OrbiPac.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = VHXNTG6D8G;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Orbi-Pac";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Orbi-Pac uses the gyroscope so you can tilt to steer and keep the playfield steady.";
+				INFOPLIST_KEY_UIAppFonts = "PressStart2P-Regular.ttf";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarHidden = YES;

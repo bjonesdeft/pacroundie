@@ -15,21 +15,24 @@ const KEY_MAP: Record<string, Dir> = {
   D: 'right',
 }
 
-const DIRS: Dir[] = ['up', 'down', 'left', 'right']
-
 /** Radians nudge on first press — same as a keyboard keydown. */
 const TAP_ROTATE = 0.12
 
+/** Ignore stick motion inside this fraction of the travel radius. */
+const STICK_DEADZONE = 0.22
+/** Axis must exceed this (after deadzone) to count as held. */
+const STICK_AXIS = 0.32
+
 /**
- * Keyboard + on-screen joypad.
- * Pad buttons hold directions exactly like arrow keys (hold to keep moving).
+ * Keyboard + on-screen thumbstick.
+ * Stick holds directions like arrow keys (drag + hold to keep moving).
  * Tap the dial or START to begin / dismiss.
  */
 export class Input {
   readonly held = new Set<Dir>()
   private restart = false
   private rotateImpulse = 0
-  /** Nested press counts so keyboard + pad don't fight. */
+  /** Nested press counts so keyboard + stick don't fight. */
   private pressCount = new Map<Dir, number>()
 
   constructor(target: HTMLElement) {
@@ -56,7 +59,7 @@ export class Input {
       if (document.hidden) this.clearAll()
     })
 
-    // Dial / canvas: tap only (movement is joypad / keyboard)
+    // Dial / canvas: tap only (movement is stick / keyboard)
     target.addEventListener('pointerup', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return
       this.restart = true
@@ -65,31 +68,80 @@ export class Input {
   }
 
   /**
-   * Classic D-pad: hold a direction like a key; slide finger to change direction;
-   * release to stop. START mirrors Space / Enter.
+   * Virtual thumbstick: drag from the base center; hold a direction to keep
+   * moving. Diagonals can engage rotate + ring-cross together. START = Space.
    */
   bindPad(root: HTMLElement): void {
-    let pointerId: number | null = null
-    let activeDir: Dir | null = null
+    const stick = root.querySelector<HTMLElement>('.stick')
+    const knob = root.querySelector<HTMLElement>('.stick-knob')
+    if (!stick || !knob) return
 
-    const dirAt = (x: number, y: number): Dir | null => {
-      const el = document.elementFromPoint(x, y)
-      const btn = el?.closest?.('[data-dir]') as HTMLElement | null
-      const dir = btn?.dataset.dir as Dir | undefined
-      return dir && DIRS.includes(dir) ? dir : null
+    let pointerId: number | null = null
+    let active = new Set<Dir>()
+
+    const setDirs = (next: Set<Dir>) => {
+      for (const dir of active) {
+        if (!next.has(dir)) this.release(dir)
+      }
+      for (const dir of next) {
+        if (!active.has(dir)) this.press(dir)
+      }
+      active = next
+      stick.dataset.active = next.size > 0 ? '1' : '0'
+      for (const dir of ['up', 'down', 'left', 'right'] as Dir[]) {
+        stick.classList.toggle(`is-${dir}`, next.has(dir))
+      }
     }
 
-    const setActive = (dir: Dir | null) => {
-      if (dir === activeDir) return
-      if (activeDir) {
-        this.release(activeDir)
-        root.querySelector(`[data-dir="${activeDir}"]`)?.classList.remove('is-down')
+    const placeKnob = (dx: number, dy: number, maxTravel: number) => {
+      const dist = Math.hypot(dx, dy)
+      let x = dx
+      let y = dy
+      if (dist > maxTravel && dist > 0) {
+        const s = maxTravel / dist
+        x *= s
+        y *= s
       }
-      activeDir = dir
-      if (dir) {
-        this.press(dir)
-        root.querySelector(`[data-dir="${dir}"]`)?.classList.add('is-down')
+      knob.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
+    }
+
+    const dirsFromVector = (dx: number, dy: number, maxTravel: number): Set<Dir> => {
+      const next = new Set<Dir>()
+      const mag = Math.hypot(dx, dy) / maxTravel
+      if (mag < STICK_DEADZONE) return next
+      const nx = dx / maxTravel
+      const ny = dy / maxTravel
+      if (nx <= -STICK_AXIS) next.add('left')
+      if (nx >= STICK_AXIS) next.add('right')
+      if (ny <= -STICK_AXIS) next.add('up')
+      if (ny >= STICK_AXIS) next.add('down')
+      // Near-cardinal: if only one axis cleared the deadzone weakly, pick dominant
+      if (next.size === 0) {
+        if (Math.abs(nx) >= Math.abs(ny)) {
+          if (nx < 0) next.add('left')
+          else next.add('right')
+        } else {
+          if (ny < 0) next.add('up')
+          else next.add('down')
+        }
       }
+      return next
+    }
+
+    const sample = (clientX: number, clientY: number) => {
+      const rect = stick.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      const maxTravel = rect.width * 0.32
+      const dx = clientX - cx
+      const dy = clientY - cy
+      placeKnob(dx, dy, maxTravel)
+      setDirs(dirsFromVector(dx, dy, maxTravel))
+    }
+
+    const resetStick = () => {
+      knob.style.transform = 'translate(-50%, -50%)'
+      setDirs(new Set())
     }
 
     const onDown = (e: PointerEvent) => {
@@ -100,30 +152,32 @@ export class Input {
         this.restart = true
         return
       }
-      if (!start?.closest?.('[data-dir]')) return
+      if (!start?.closest?.('.stick')) return
       e.preventDefault()
       pointerId = e.pointerId
       try {
-        root.setPointerCapture(e.pointerId)
+        stick.setPointerCapture(e.pointerId)
       } catch {
         /* ignore */
       }
-      setActive(dirAt(e.clientX, e.clientY))
+      stick.classList.add('is-active')
+      sample(e.clientX, e.clientY)
     }
 
     const onMove = (e: PointerEvent) => {
       if (e.pointerId !== pointerId) return
       e.preventDefault()
-      setActive(dirAt(e.clientX, e.clientY))
+      sample(e.clientX, e.clientY)
     }
 
     const onUp = (e: PointerEvent) => {
       if (e.pointerId !== pointerId) return
       e.preventDefault()
       pointerId = null
-      setActive(null)
+      stick.classList.remove('is-active')
+      resetStick()
       try {
-        root.releasePointerCapture(e.pointerId)
+        stick.releasePointerCapture(e.pointerId)
       } catch {
         /* ignore */
       }
@@ -133,9 +187,10 @@ export class Input {
     root.addEventListener('pointermove', onMove)
     root.addEventListener('pointerup', onUp)
     root.addEventListener('pointercancel', onUp)
-    root.addEventListener('lostpointercapture', () => {
+    stick.addEventListener('lostpointercapture', () => {
       pointerId = null
-      setActive(null)
+      stick.classList.remove('is-active')
+      resetStick()
     })
     root.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false })
   }

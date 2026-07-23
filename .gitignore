@@ -18,6 +18,7 @@ native/**/xcuserdata/
 native/**/DerivedData/
 native/*.xcworkspace
 !native/*.xcodeproj/project.pbxproj
+!native/*.xcodeproj/xcshareddata/
 
 # Editor directories and files
 .vscode/*

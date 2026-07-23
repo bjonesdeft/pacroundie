@@ -2,6 +2,10 @@ import SwiftUI
 
 @main
 struct OrbiPacApp: App {
+    init() {
+        ArcadeFont.registerIfNeeded()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
