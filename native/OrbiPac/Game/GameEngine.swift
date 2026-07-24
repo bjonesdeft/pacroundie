@@ -30,10 +30,19 @@ final class GameEngine {
     private var awaitingStart = false
     private var jinglePlaying = false
     private var flipLeft: CGFloat = 0
+    /// Shadow / Mirror mode — reverse controls, restore dots (PoP mirror scene).
+    private(set) var mirrorMode = false
+    /// Zookeeper net mode — Pac holds the net; touch sends ghosts home.
+    private(set) var netLeft: CGFloat = 0
+    /// Short wall-flash / label burst when a special mode begins.
+    private var modeIntroLeft: CGFloat = 0
+    private var modeIntro: ModeIntro = .none
     /// 0…1 threat for haptics (same-ring / gap-closing hunters).
     private(set) var ghostPressure: CGFloat = 0
     private var pelletTickPending = false
     private var deathRumblePending = false
+
+    var netActive: Bool { netLeft > 0 }
 
     /// Host presents initials UI and calls the supplied completion.
     var onHighScore: ((Int, Int, @escaping (String) -> Void) -> Void)?
@@ -60,6 +69,10 @@ final class GameEngine {
             maze, pac, ghosts, score, lives, phase, frightLeft, visualTime, level, phaseTimer, highScore,
             phase == .won ? visualTime - wonAt : 0,
             flipLeft,
+            mirrorMode,
+            netLeft,
+            modeIntroLeft,
+            modeIntro,
             in: context, size: size
         )
     }
@@ -98,6 +111,9 @@ final class GameEngine {
         jinglePlaying = false
         frightLeft = 0
         flipLeft = 0
+        endMirror(playSound: false)
+        netLeft = 0
+        clearModeIntro()
         ghostPressure = 0
         prizeSpawned = false
         prizeTimer = 0
@@ -153,6 +169,9 @@ final class GameEngine {
         }
         frightLeft = 0
         flipLeft = 0
+        endMirror(playSound: false)
+        netLeft = 0
+        clearModeIntro()
         ghostPressure = 0
         // Match web: only stop ambient loops so the death one-shot can finish
         // after a mid-life reset. Full silence is reserved for attract.
@@ -255,17 +274,44 @@ final class GameEngine {
         if flipLeft > 0 {
             flipLeft = max(0, flipLeft - dt * 1000)
         }
+        if modeIntroLeft > 0 {
+            modeIntroLeft = max(0, modeIntroLeft - dt * 1000)
+            if modeIntroLeft <= 0 { modeIntro = .none }
+        }
         var held = input.held
         var impulse = input.consumeRotateImpulse()
+        // Flip-dial and Mirror both reverse inputs (stacking cancels).
         if flipLeft > 0 {
             held = Set(held.map(\.flipped))
             impulse = -impulse
         }
+        if mirrorMode {
+            held = Set(held.map(\.flipped))
+            impulse = -impulse
+        }
         pac.update(maze, dt, held, impulse)
+        if !mirrorMode, pac.consumeMirrorLoopTrigger() {
+            beginMirror()
+        }
         let local = pac.localAngle(maze)
         let ring = pac.occupancyRing(maze)
 
-        if let pellet = maze.tryEat(ring, local) {
+        if mirrorMode {
+            // Power / flip still collect normally; regular dots are put back instead.
+            if let pellet = maze.tryEat(ring, local, regular: false, power: true, flip: true) {
+                pelletTickPending = true
+                if pellet.flip {
+                    note(40)
+                    beginFlip()
+                } else if pellet.power {
+                    note(50)
+                    beginFright()
+                }
+            } else if maze.tryRestoreDot(ring, local) {
+                pelletTickPending = true
+                audio.playMunch()
+            }
+        } else if let pellet = maze.tryEat(ring, local) {
             pelletTickPending = true
             if pellet.flip {
                 note(40)
@@ -273,10 +319,7 @@ final class GameEngine {
             } else {
                 note(pellet.power ? 50 : 10)
                 if pellet.power {
-                    frightLeft = Constants.frightenedMS
-                    ghostPoints = 200
-                    ghosts.forEach { $0.frighten() }
-                    audio.startFright()
+                    beginFright()
                 } else {
                     audio.playMunch()
                 }
@@ -291,12 +334,23 @@ final class GameEngine {
         }
 
         if let prize = maze.tryEatPrize(ring) {
-            note(prize.points)
             prizeTimer = 0
-            audio.playEatFruit()
+            if prize.isNet {
+                beginNet()
+            } else {
+                note(prize.points)
+                audio.playEatFruit()
+            }
         } else if maze.prize?.active == true {
             prizeTimer -= dt * 1000
             if prizeTimer <= 0 { maze.prize = nil }
+        }
+
+        if netLeft > 0 {
+            netLeft -= dt * 1000
+            if netLeft <= 0 {
+                endNet()
+            }
         }
 
         if frightLeft > 0 {
@@ -321,14 +375,71 @@ final class GameEngine {
             phase = .won
             wonAt = visualTime
             flipLeft = 0
+            endMirror(playSound: false)
+            if netLeft > 0 { endNet() }
+            clearModeIntro()
             ghostPressure = 0
         }
     }
 
+    private func beginModeIntro(_ kind: ModeIntro) {
+        modeIntro = kind
+        modeIntroLeft = Constants.modeIntroMS
+    }
+
+    private func clearModeIntro() {
+        modeIntro = .none
+        modeIntroLeft = 0
+    }
+
     private func beginFlip() {
         flipLeft = Constants.flipMS
+        beginModeIntro(.flip)
         ghosts.forEach { $0.confuseBurst() }
         audio.playEatFruit()
+    }
+
+    private func beginMirror() {
+        guard !mirrorMode else { return }
+        mirrorMode = true
+        beginModeIntro(.mirror)
+        pac.resetOuterLoop()
+        audio.playDanger()
+    }
+
+    private func endMirror(playSound: Bool = false) {
+        guard mirrorMode else {
+            pac.resetOuterLoop()
+            return
+        }
+        mirrorMode = false
+        pac.resetOuterLoop()
+        if playSound { audio.playEatGhost() }
+    }
+
+    private func beginNet() {
+        netLeft = Constants.netMS
+        beginModeIntro(.net)
+        audio.playExtend()
+        pelletTickPending = true
+    }
+
+    private func beginFright() {
+        frightLeft = Constants.frightenedMS
+        ghostPoints = 200
+        ghosts.forEach { $0.frighten() }
+        beginModeIntro(.fright)
+        audio.startFright()
+    }
+
+    /// Net fades: score 100 per ghost still in (or returning to) the house.
+    private func endNet() {
+        let caged = ghosts.filter { $0.mode == .house || $0.mode == .eaten }.count
+        netLeft = 0
+        if caged > 0 {
+            note(caged * Constants.netBonusPerGhost)
+            audio.playEatFruit()
+        }
     }
 
     private func moveGhosts(_ dt: CGFloat, _ attract: Bool, _ eatenOnly: Bool = false) {
@@ -402,14 +513,30 @@ final class GameEngine {
                 ghostPoints *= 2
                 eatFreeze = Constants.eatFreezeMS
                 audio.playEatGhost()
+                // Eating a ghost while shadowed snaps back to normal play.
+                if mirrorMode { endMirror(playSound: false) }
+                return
+            }
+            // Zookeeper net: scoop hunters home instead of dying.
+            if netActive {
+                g.netCapture(maze)
+                audio.playEatGhost()
+                pelletTickPending = true
                 return
             }
             pac.alive = false
             lives -= 1
-            audio.playDeath()
+            if mirrorMode {
+                audio.playAccident()
+            } else {
+                audio.playDeath()
+            }
             deathRumblePending = true
             frightLeft = 0
             flipLeft = 0
+            endMirror(playSound: false)
+            netLeft = 0
+            clearModeIntro()
             ghostPressure = 0
             phase = .dying
             phaseTimer = Constants.deathMS

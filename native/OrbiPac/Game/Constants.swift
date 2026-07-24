@@ -9,9 +9,20 @@ enum Constants {
     static let eatFreezeMS: CGFloat = 550, prizeMS: CGFloat = 10_000
     /// Flip-dial power duration (ms).
     static let flipMS: CGFloat = 5500
+    /// Zookeeper net: hold duration, house hold after capture, bonus per caged ghost.
+    static let netMS: CGFloat = 5000
+    static let netHouseHoldMS: CGFloat = 3000
+    static let netBonusPerGhost = 100
+    static let netSpawnChance: CGFloat = 0.05
+    /// Shared start flourish for flip / mirror / net / fright (ms).
+    static let modeIntroMS: CGFloat = 720
     static let prizePoints = [100,300,500,500,700,700,1000,1000,2000,2000,3000,3000,5000]
     static let ghostSpeed: [GhostName: CGFloat] = [.blinky: 1.12, .pinky: 1.02, .inky: 0.94, .clyde: 0.86]
     static let gapAlign: CGFloat = 0.055, pacCrossPad: CGFloat = 0.09, gameSpeed: CGFloat = 1.5625
+    /// Minimum mid-to-mid angle between openings on adjacent walls (~60°).
+    static let minAdjacentGapSep: CGFloat = .pi / 3
+    /// After landing from a ring cross, ignore up/down briefly so holds can't chain.
+    static let radialCrossCooldown: CGFloat = 0.18
     static let frightenedMS: CGFloat = 7000, readyMS: CGFloat = 2200, deathMS: CGFloat = 1980, gameOverMS: CGFloat = 2800
     static let wonFlashCount = 4, wonFlashHalf: CGFloat = 0.4, wonFlashDuration: CGFloat = 3.2
     static let wonSpinRevs: CGFloat = 2, wonFade: CGFloat = 0.45, wonTotal: CGFloat = 3.65
@@ -34,4 +45,5 @@ enum Colors {
     static let frightened="#2121ff", frightenedFlash="#ffffff", eyes="#ffffff", pupil="#2121de", gate="#ffb8ff"
     static let house="#0a0a18", prize="#ff4a6a", prizeLeaf="#22c55e"
     static let flip="#c084fc"
+    static let netHandle="#8b5a2b", netMesh="#e8e8e8", netRim="#5eead4"
 }

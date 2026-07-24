@@ -51,21 +51,17 @@ export class Maze {
     const h2 = gapHalfAngle(this.wallRadii[2])
     const h3 = gapHalfAngle(this.wallRadii[3])
 
+    // Three openings per playable wall, 120° apart. Adjacent walls are staggered by
+    // 60° (π/3) so a cross never lands you in the next hole without left/right travel.
+    const base = 1.2
+    const step = (2 * Math.PI) / 3
+    const stagger = Math.PI / 3
     this.gaps = [
       // Innermost wall / house gate — screen-fixed (does not rotate with the maze)
       [gapAt(-Math.PI / 2, h0)],
-      [gapAt(1.1, h1), gapAt(1.1 + Math.PI, h1), gapAt(1.1 + Math.PI / 2, h1)],
-      [
-        gapAt(0.4, h2),
-        gapAt(0.4 + (2 * Math.PI) / 3, h2),
-        gapAt(0.4 + (4 * Math.PI) / 3, h2),
-      ],
-      [
-        gapAt(1.85, h3),
-        gapAt(1.85 + Math.PI, h3),
-        gapAt(0.55, h3),
-        gapAt(0.55 + Math.PI, h3),
-      ],
+      [0, 1, 2].map((k) => gapAt(base + k * step, h1)),
+      [0, 1, 2].map((k) => gapAt(base + stagger + k * step, h2)),
+      [0, 1, 2].map((k) => gapAt(base + k * step, h3)),
     ]
 
     this.spokes = []

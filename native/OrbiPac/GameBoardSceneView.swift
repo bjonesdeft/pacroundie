@@ -14,11 +14,12 @@ struct GameBoardSceneView: View {
 
         ZStack {
             GameCanvasView(controller: controller)
-                // Z: gravity upright so the score stays at the top (flat L/R tip, etc.).
-                // X: forward/back cancel. Y roll unused — L/R is the in-plane spin.
-                .rotation3DEffect(.radians(yaw), axis: (x: 0, y: 0, z: 1), perspective: 0.35)
-                .rotation3DEffect(.radians(roll), axis: (x: 0, y: 1, z: 0), perspective: 0.35)
-                .rotation3DEffect(.radians(pitch), axis: (x: 1, y: 0, z: 0), perspective: 0.35)
+                // Light leveling only — strong 3D tip never read as facing the user.
+                // Disable SwiftUI animation so smoothed motion isn't re-interpolated.
+                .rotation3DEffect(.radians(yaw), axis: (x: 0, y: 0, z: 1), perspective: 0.10)
+                .rotation3DEffect(.radians(roll), axis: (x: 0, y: 1, z: 0), perspective: 0.10)
+                .rotation3DEffect(.radians(pitch), axis: (x: 1, y: 0, z: 0), perspective: 0.10)
+                .transaction { $0.animation = nil }
                 // 3D effects break UIKit hit-testing — taps are handled by the overlay.
                 .allowsHitTesting(false)
 

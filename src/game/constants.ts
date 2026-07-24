@@ -43,6 +43,15 @@ export const GAP_ALIGN = 0.055
  */
 export const PAC_CROSS_PAD = 0.09
 
+/**
+ * Minimum mid-to-mid angle between openings on adjacent walls.
+ * Keeps ring-crosses from chaining without a deliberate left/right move.
+ */
+export const MIN_ADJACENT_GAP_SEP = Math.PI / 3
+
+/** After landing from a ring cross, ignore up/down briefly so holds can't chain. */
+export const RADIAL_CROSS_COOLDOWN = 0.18
+
 /** Half-angle of a ring gap, just wider than Pac at that wall radius. */
 export function gapHalfAngle(wallRadius: number): number {
   return (PAC_RADIUS * 1.2) / wallRadius

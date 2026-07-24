@@ -1,4 +1,10 @@
-import { PAC_LINEAR_SPEED, PAC_SCREEN_ANGLE, angleDelta, normAngle } from './constants'
+import {
+  PAC_LINEAR_SPEED,
+  PAC_SCREEN_ANGLE,
+  RADIAL_CROSS_COOLDOWN,
+  angleDelta,
+  normAngle,
+} from './constants'
 import type { Maze } from './Maze'
 import type { Dir } from './types'
 
@@ -29,6 +35,8 @@ export class PacMan {
   /** Maze rotation we're easing toward before a ring cross. */
   private alignRot: number | null = null
   private pendingCross: { targetRing: number; facing: Dir } | null = null
+  /** Seconds left before another up/down ring cross can start. */
+  private radialCool = 0
 
   constructor(maze: Maze) {
     this.ring = maze.ringCount - 1
@@ -47,6 +55,7 @@ export class PacMan {
     this.moving = false
     this.alignRot = null
     this.pendingCross = null
+    this.radialCool = 0
   }
 
   get isMoving(): boolean {
@@ -117,21 +126,24 @@ export class PacMan {
       }
 
       const local = this.localAngle(maze)
+      this.radialCool = Math.max(0, this.radialCool - dt)
 
-      if (held.has('up') && maze.canPacCross(this.ring, true, local)) {
-        const wall = maze.wallIndexForPacCross(this.ring, true)
-        const mid = maze.nearestGapMid(wall, local)
-        this.alignRot = normAngle(PAC_SCREEN_ANGLE - mid)
-        this.pendingCross = { targetRing: this.ring - 1, facing: 'up' }
-        this.setFacing('up')
-        active = true
-      } else if (held.has('down') && maze.canPacCross(this.ring, false, local)) {
-        const wall = maze.wallIndexForPacCross(this.ring, false)
-        const mid = maze.nearestGapMid(wall, local)
-        this.alignRot = normAngle(PAC_SCREEN_ANGLE - mid)
-        this.pendingCross = { targetRing: this.ring + 1, facing: 'down' }
-        this.setFacing('down')
-        active = true
+      if (this.radialCool <= 0) {
+        if (held.has('up') && maze.canPacCross(this.ring, true, local)) {
+          const wall = maze.wallIndexForPacCross(this.ring, true)
+          const mid = maze.nearestGapMid(wall, local)
+          this.alignRot = normAngle(PAC_SCREEN_ANGLE - mid)
+          this.pendingCross = { targetRing: this.ring - 1, facing: 'up' }
+          this.setFacing('up')
+          active = true
+        } else if (held.has('down') && maze.canPacCross(this.ring, false, local)) {
+          const wall = maze.wallIndexForPacCross(this.ring, false)
+          const mid = maze.nearestGapMid(wall, local)
+          this.alignRot = normAngle(PAC_SCREEN_ANGLE - mid)
+          this.pendingCross = { targetRing: this.ring + 1, facing: 'down' }
+          this.setFacing('down')
+          active = true
+        }
       }
     }
 
@@ -143,6 +155,7 @@ export class PacMan {
         this.radius = dest
         this.ring = this.targetRing
         this.moving = false
+        this.radialCool = RADIAL_CROSS_COOLDOWN
       } else {
         this.radius += Math.sign(delta) * step
       }

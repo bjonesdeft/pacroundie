@@ -17,10 +17,22 @@ enum GhostMode { case scatter, chase, frightened, eaten, house }
 enum GhostName: CaseIterable { case blinky, pinky, inky, clyde }
 enum GamePhase { case attract, ready, playing, dying, won, nameentry, gameover }
 
+/// Short visual burst when a special mode begins (flip / mirror / net / power).
+enum ModeIntro: Equatable {
+    case none, flip, mirror, net, fright
+}
+
 struct Gap { var start: CGFloat; var end: CGFloat }
 struct RadialWall { var ring: Int; var angle, rInner, rOuter: CGFloat }
 struct Pellet { var ring: Int; var angle: CGFloat; var power, eaten: Bool; var flip: Bool = false }
-struct Prize { var ring: Int; var angle: CGFloat; var points, kind: Int; var active: Bool }
+struct Prize {
+    var ring: Int
+    var angle: CGFloat
+    var points, kind: Int
+    var active: Bool
+    /// Zookeeper net prize (rare) — not fruit.
+    var isNet: Bool = false
+}
 struct Polar { var radius, angle: CGFloat }
 struct PacSnapshot { var ring: Int; var angle: CGFloat; var facing: Dir; var radius: CGFloat }
 struct ScoreEntry: Codable {
