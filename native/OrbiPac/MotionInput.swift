@@ -14,13 +14,24 @@ final class MotionInput {
     private var gyroDirs = Set<Dir>()
     private(set) var isAvailable = false
 
-    /// Radians applied to the playfield only.
+    /// Radians applied to the playfield only (smoothed for display).
     private(set) var counterPitch: Double = 0
     private(set) var counterRoll: Double = 0
     private(set) var counterYaw: Double = 0
 
-    private let deadzone: Double = 0.08
-    private let axis: Double = 0.14
+    private var targetPitch: Double = 0
+    private var targetYaw: Double = 0
+
+    /// Enter / exit thresholds — hysteresis stops left/right flicker at the edge.
+    private let deadzone: Double = 0.09
+    private let enterAxis: Double = 0.17
+    private let exitAxis: Double = 0.10
+    /// How much of the forward/back tip we counter in 3D (full cancel looked wrong).
+    private let pitchLevelGain: Double = 0.18
+    /// How strongly we spin to keep score at gravity-top (1 = full).
+    private let yawLevelGain: Double = 0.42
+    /// Per-frame blend toward target attitude (lower = calmer board).
+    private let levelSmooth: Double = 0.12
 
     func start() {
         guard motion.isDeviceMotionAvailable else {
@@ -72,47 +83,61 @@ final class MotionInput {
 
         let upright = Self.scoreTopAngle(gravity: dm.gravity)
 
-        // Attract / pre-start: still keep the score at gravity-top (flat L/R tip, etc.).
+        // Attract / pre-start: mild score-upright only (no 3D tip).
         guard let reference else {
-            counterPitch = 0
-            counterRoll = 0
-            counterYaw = Self.normAngle(upright)
+            targetPitch = 0
+            targetYaw = Self.normAngle(upright) * yawLevelGain
+            blendCounters()
             return []
         }
 
         let relative = dm.attitude.copy() as! CMAttitude
         relative.multiply(byInverseOf: reference)
 
-        // Forward / back tip: 3D pitch cancel relative to home.
-        counterPitch = -relative.pitch
-        // Left / right tip (including flat on the table): spin in-plane so the score
-        // stays at the top — not a Y-axis “flip onto the edge” tip.
-        counterRoll = 0
-        counterYaw = Self.normAngle(upright - referenceUpright)
+        // Subtle forward/back hint only — full counter-tilt never read as “face the user.”
+        targetPitch = -relative.pitch * pitchLevelGain
+        // Soft in-plane upright so score stays roughly at the top.
+        targetYaw = Self.normAngle(upright - referenceUpright) * yawLevelGain
+        blendCounters()
 
-        var next = Set<Dir>()
         let roll = relative.roll
         let pitch = relative.pitch
-
-        if abs(roll) >= deadzone || abs(pitch) >= deadzone {
-            if roll <= -axis { next.insert(.left) }
-            if roll >= axis { next.insert(.right) }
-            if pitch <= -axis { next.insert(.up) }
-            if pitch >= axis { next.insert(.down) }
-            if next.isEmpty {
-                if abs(roll) >= abs(pitch) {
-                    next.insert(roll < 0 ? .left : .right)
-                } else {
-                    next.insert(pitch < 0 ? .up : .down)
-                }
-            }
-        }
-
-        gyroDirs = next
-        return next
+        gyroDirs = stickyDirs(roll: roll, pitch: pitch, previous: gyroDirs)
+        return gyroDirs
     }
 
     var currentDirs: Set<Dir> { gyroDirs }
+
+    /// Keep holding a direction until tilt drops below the exit threshold.
+    private func stickyDirs(roll: Double, pitch: Double, previous: Set<Dir>) -> Set<Dir> {
+        var next = Set<Dir>()
+        func keep(_ dir: Dir, value: Double, positive: Bool) {
+            let on = previous.contains(dir)
+            let enter = positive ? value >= enterAxis : value <= -enterAxis
+            let hold = positive ? value >= exitAxis : value <= -exitAxis
+            if on ? hold : enter { next.insert(dir) }
+        }
+        keep(.left, value: roll, positive: false)
+        keep(.right, value: roll, positive: true)
+        keep(.up, value: pitch, positive: false)
+        keep(.down, value: pitch, positive: true)
+
+        if next.isEmpty, abs(roll) >= deadzone || abs(pitch) >= deadzone {
+            if abs(roll) >= abs(pitch) {
+                next.insert(roll < 0 ? .left : .right)
+            } else {
+                next.insert(pitch < 0 ? .up : .down)
+            }
+        }
+        return next
+    }
+
+    private func blendCounters() {
+        counterPitch += (targetPitch - counterPitch) * levelSmooth
+        counterRoll = 0
+        let yawErr = Self.normAngle(targetYaw - counterYaw)
+        counterYaw = Self.normAngle(counterYaw + yawErr * levelSmooth)
+    }
 
     /// Angle that puts canvas-up (score) opposite gravity — works upright and face-up.
     private static func scoreTopAngle(gravity g: CMAcceleration) -> Double {
@@ -134,6 +159,8 @@ final class MotionInput {
         counterPitch = 0
         counterRoll = 0
         counterYaw = 0
+        targetPitch = 0
+        targetYaw = 0
     }
 }
 #else

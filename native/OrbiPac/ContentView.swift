@@ -112,6 +112,9 @@ private struct HelpSheet: View {
                         Text("Tilt to steer; the maze stays put while the phone moves around it.")
                         Text("Feel the buzz — hunters on your ring close the gap.")
                         Text("Purple diamond = FLIP: controls invert, maze mirrors, ghosts scramble.")
+                        Text("Full loop on the outer ring = MIRROR: shadow Pac, reverse controls, dots return.")
+                        Text("In MIRROR, eat a frightened ghost to break the spell. Death plays accident.")
+                        Text("Rare net prize (Zookeeper): hold 5s, touch ghosts to cage them, then score 100 each.")
                         Text("Mac: arrow keys / WASD.")
                         Text("Ghosts spawn in the center.")
                     }

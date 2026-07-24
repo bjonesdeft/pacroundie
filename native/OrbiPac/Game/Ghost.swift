@@ -7,12 +7,14 @@ final class Ghost {
     private var movingRadial=false, crossingWall = -1, alignAngle: CGFloat?, homeAngle: CGFloat = 0
     var turn = 1, facing: Dir = .left
     private var bob: CGFloat = 0, housePhase=0, collideCool: CGFloat=0, houseRadiusTarget: CGFloat=16, houseWanderTimer: CGFloat=0, wallBounceLock: CGFloat=0, fromHouseExit=false, wanderTimer: CGFloat=0, wanderRing=0, wanderAngle: CGFloat=0, pendingDecision=false
+    /// When set, next house entry uses this exit timer (ms) instead of the default.
+    private var houseHoldOverride: CGFloat? = nil
     init(_ name: GhostName,_ color:String,_ release:CGFloat) { self.name=name; self.color=color; releaseAt=release; exitTimer=release }
     var inSpawnVisual: Bool { mode == .house || mode == .eaten }
     private func baseLinear()->CGFloat { Constants.ghostLinearSpeed * (Constants.ghostSpeed[name] ?? 1) }
     private func omega()->CGFloat { linearSpeed/max(24,radius) }
     func reset(_ inHouse:Bool,_ home:CGFloat,_ maze:Maze,_ attract:Bool=false) {
-        homeAngle = home; angle = home; exitTimer = attract ? CGFloat.random(in: 400...1300) : releaseAt; movingRadial = false; crossingWall = -1; alignAngle = nil; housePhase = 0; collideCool = 0; wallBounceLock = 0; fromHouseExit = false; wanderTimer = 0; wanderRing = Int.random(in: 0..<maze.ringCount); wanderAngle = CGFloat.random(in: 0..<(.pi*2)); pendingDecision = false; houseRadiusTarget = CGFloat.random(in: 12...20); houseWanderTimer = CGFloat.random(in: 0.4...1.2); linearSpeed = baseLinear(); turn = Bool.random() ? 1 : -1; facing = turn > 0 ? .right : .left; bob = 0; mode = .house; ring = -1; targetRing = -1; radius = CGFloat.random(in: 10...18)
+        homeAngle = home; angle = home; exitTimer = attract ? CGFloat.random(in: 400...1300) : releaseAt; movingRadial = false; crossingWall = -1; alignAngle = nil; housePhase = 0; collideCool = 0; wallBounceLock = 0; fromHouseExit = false; wanderTimer = 0; wanderRing = Int.random(in: 0..<maze.ringCount); wanderAngle = CGFloat.random(in: 0..<(.pi*2)); pendingDecision = false; houseRadiusTarget = CGFloat.random(in: 12...20); houseWanderTimer = CGFloat.random(in: 0.4...1.2); linearSpeed = baseLinear(); turn = Bool.random() ? 1 : -1; facing = turn > 0 ? .right : .left; bob = 0; mode = .house; ring = -1; targetRing = -1; radius = CGFloat.random(in: 10...18); houseHoldOverride = nil
     }
     func bounceOffGhost() { guard collideCool <= 0, mode != .house, mode != .eaten, !movingRadial else{return}; turn = -turn; facing = turn > 0 ? .right : .left; alignAngle = nil; collideCool = 0.45; wallBounceLock = 0.25 }
     func frighten() { guard mode != .eaten, mode != .house else{return}; mode = .frightened; turn = -turn; facing = turn > 0 ? .right : .left; alignAngle = nil; wallBounceLock = 0.2; linearSpeed = Constants.frightLinearSpeed*(Constants.ghostSpeed[name] ?? 1) }
@@ -25,7 +27,26 @@ final class Ghost {
         wallBounceLock = 0.35
         pendingDecision = true
     }
-    func becomeEaten(_ maze:Maze) { angle = maze.toScreen(angle); mode = .eaten; alignAngle = nil; movingRadial = false; crossingWall = -1; pendingDecision = false; fromHouseExit = false; linearSpeed = Constants.eatenLinearSpeed*(Constants.ghostSpeed[name] ?? 1) }
+    func becomeEaten(_ maze:Maze) {
+        angle = maze.toScreen(angle)
+        mode = .eaten
+        alignAngle = nil
+        movingRadial = false
+        crossingWall = -1
+        pendingDecision = false
+        fromHouseExit = false
+        houseHoldOverride = nil
+        linearSpeed = Constants.eatenLinearSpeed*(Constants.ghostSpeed[name] ?? 1)
+    }
+
+    /// Zookeeper net: yeet home and sit in the house for `holdMS`.
+    func netCapture(_ maze: Maze, holdMS: CGFloat = Constants.netHouseHoldMS) {
+        guard mode != .house, mode != .eaten else { return }
+        becomeEaten(maze)
+        houseHoldOverride = holdMS
+        // Slightly faster flight home so captures feel snappy.
+        linearSpeed = Constants.eatenLinearSpeed * (Constants.ghostSpeed[name] ?? 1) * 1.25
+    }
     func setMode(_ next:GhostMode,_ force:Bool=false) { if !force && (mode == .frightened || mode == .eaten || mode == .house) {return}; mode=next; linearSpeed=baseLinear() }
     func update(_ maze:Maze,_ dt:CGFloat,_ pac:PacSnapshot,_ blinky:Ghost,_ elapsed:CGFloat,_ attract:Bool=false,_ confused:Bool=false) {
         bob += dt; collideCool -= dt; wallBounceLock -= dt
@@ -72,8 +93,25 @@ final class Ghost {
         if Constants.angleDist(angle,gate) < 0.08 && abs(radius-gr)<2.5 {angle=maze.toLocal(gate);mode = .scatter;housePhase=0;ring = -1;targetRing=0;crossingWall=0;movingRadial=true;fromHouseExit=true;alignAngle = nil;pendingDecision=true;linearSpeed=baseLinear();facing = .up}
     }
     private func wanderHouse(_ dt:CGFloat,_ maxR:CGFloat) { houseWanderTimer-=dt;if houseWanderTimer <= 0{houseWanderTimer=CGFloat.random(in:0.5...1.7);if Bool.random(){turn = -turn};houseRadiusTarget=CGFloat.random(in:6...maxR)};angle=Constants.norm(angle+CGFloat(turn)*0.55*dt);facing=turn>0 ? .right:.left;let s=10*dt,d=houseRadiusTarget-radius;radius=abs(d)>s ? radius+(d<0 ? -s:s):houseRadiusTarget;radius=max(5,min(maxR,radius)) }
-    private func updateEaten(_ maze:Maze,_ dt:CGFloat) { let ga=maze.houseGateScreenMid(),gr=maze.wallRadii[0]-2,target=CGPoint(x:cos(ga)*gr,y:sin(ga)*gr),cur=CGPoint(x:cos(angle)*radius,y:sin(angle)*radius),dx=target.x-cur.x,dy=target.y-cur.y,d=hypot(dx,dy),step=Constants.eatenLinearSpeed*(Constants.ghostSpeed[name] ?? 1)*1.15*dt
-        if d <= step {angle=homeAngle;radius=12;ring = -1;targetRing = -1;mode = .house;housePhase=0;exitTimer=1200;houseRadiusTarget=12;houseWanderTimer = 0.3;linearSpeed=baseLinear();alignAngle = nil;facing = .up;return};let n=CGPoint(x:cur.x+dx/d*step,y:cur.y+dy/d*step);radius=hypot(n.x,n.y);angle=Constants.norm(atan2(n.y,n.x));facing=abs(dx)>=abs(dy) ? (dx>0 ? .right:.left):(dy>0 ? .down:.up) }
+    private func updateEaten(_ maze:Maze,_ dt:CGFloat) {
+        let ga=maze.houseGateScreenMid(),gr=maze.wallRadii[0]-2
+        let target=CGPoint(x:cos(ga)*gr,y:sin(ga)*gr)
+        let cur=CGPoint(x:cos(angle)*radius,y:sin(angle)*radius)
+        let dx=target.x-cur.x, dy=target.y-cur.y, d=hypot(dx,dy)
+        let step=linearSpeed*1.15*dt
+        if d <= step {
+            angle=homeAngle; radius=12; ring = -1; targetRing = -1
+            mode = .house; housePhase=0
+            exitTimer = houseHoldOverride ?? 1200
+            houseHoldOverride = nil
+            houseRadiusTarget=12; houseWanderTimer = 0.3
+            linearSpeed=baseLinear(); alignAngle = nil; facing = .up
+            return
+        }
+        let n=CGPoint(x:cur.x+dx/d*step,y:cur.y+dy/d*step)
+        radius=hypot(n.x,n.y); angle=Constants.norm(atan2(n.y,n.x))
+        facing=abs(dx)>=abs(dy) ? (dx>0 ? .right:.left):(dy>0 ? .down:.up)
+    }
     private func computeTarget(_ maze:Maze,_ pac:PacSnapshot,_ blinky:Ghost)->(Int,CGFloat) {
         if mode == .frightened { let outer=maze.ringCount-1; return(abs(outer-pac.ring) >= pac.ring ? outer:0,Constants.norm(pac.angle + .pi)) }
         if mode == .scatter { switch name { case .blinky:return(3,0.3); case .pinky:return(3,.pi - 0.3); case .inky:return(0,0.4); case .clyde:return(0,.pi + 0.4) } }

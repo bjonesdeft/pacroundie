@@ -8,9 +8,16 @@ final class GameAudio {
     private var oneShots: [AVAudioPlayer] = []
 
     private func url(_ name: String) -> URL? {
-        let ext = name == "death" ? "mp3" : "wav"
-        return Bundle.main.url(forResource: name, withExtension: ext)
-            ?? Bundle.main.url(forResource: name, withExtension: ext, subdirectory: "Sounds")
+        let exts: [String]
+        switch name {
+        case "death": exts = ["mp3", "wav"]
+        default: exts = ["wav", "caf", "mp3", "ogg"]
+        }
+        for ext in exts {
+            if let u = Bundle.main.url(forResource: name, withExtension: ext) { return u }
+            if let u = Bundle.main.url(forResource: name, withExtension: ext, subdirectory: "Sounds") { return u }
+        }
+        return nil
     }
 
     @discardableResult
@@ -60,6 +67,15 @@ final class GameAudio {
     func playDeath() {
         stopAmbient()
         _ = play("death", 0.6)
+    }
+
+    /// Prince of Persia–style Mirror alert when shadow mode begins.
+    func playDanger() { _ = play("danger", 0.7) }
+
+    /// Mirror-mode death sting.
+    func playAccident() {
+        stopAmbient()
+        _ = play("accident", 0.7)
     }
 
     private func loop(_ first: String, _ sustained: String, _ kind: String, _ volume: Float) {

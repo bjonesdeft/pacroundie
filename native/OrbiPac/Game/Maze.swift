@@ -13,11 +13,14 @@ final class Maze {
         ringRadii = [(46+78)/2, (78+110)/2, (110+142)/2, (142+166)/2]
         func gap(_ mid: CGFloat, _ half: CGFloat) -> Gap { Gap(start: Constants.norm(mid-half), end: Constants.norm(mid+half)) }
         let h0 = Constants.gapHalfAngle(46) * 1.15, h1 = Constants.gapHalfAngle(78), h2 = Constants.gapHalfAngle(110), h3 = Constants.gapHalfAngle(142)
+        // Three openings per playable wall, 120° apart. Adjacent walls stagger by 60°
+        // so a cross never lands in the next hole without left/right travel.
+        let base: CGFloat = 1.2, step = CGFloat.pi * 2 / 3, stagger = CGFloat.pi / 3
         gaps = [
             [gap(-.pi/2, h0)],
-            [gap(1.1,h1),gap(1.1 + .pi,h1),gap(1.1 + .pi/2,h1)],
-            [gap(0.4,h2),gap(0.4 + 2 * .pi/3,h2),gap(0.4 + 4 * .pi/3,h2)],
-            [gap(1.85,h3),gap(1.85 + .pi,h3),gap(0.55,h3),gap(0.55 + .pi,h3)]
+            [0,1,2].map { gap(base + CGFloat($0) * step, h1) },
+            [0,1,2].map { gap(base + stagger + CGFloat($0) * step, h2) },
+            [0,1,2].map { gap(base + CGFloat($0) * step, h3) },
         ]
         rebuildSpokes(0); spawnPellets()
     }
@@ -85,7 +88,51 @@ final class Maze {
     }
     func resetPellets() { for i in pellets.indices { pellets[i].eaten=false }; pelletCount=pellets.count; pelletTotal=pelletCount; prize=nil }
     var pelletsEaten: Int { pelletTotal-pelletCount }
-    func maybeSpawnPrize(_ level:Int) { guard prize == nil, pelletsEaten >= pelletTotal/2 else{return}; let ring=ringCount-3; guard ring>=0 else{return}; let idx=max(0,min(Constants.prizePoints.count-1,level-1)); prize=Prize(ring:ring,angle:Constants.pacScreenAngle,points:Constants.prizePoints[idx],kind:fruitKindForLevel(level),active:true) }
+    func maybeSpawnPrize(_ level:Int) {
+        guard prize == nil, pelletsEaten >= pelletTotal/2 else { return }
+        let ring = ringCount - 3
+        guard ring >= 0 else { return }
+        // 5% chance: Zookeeper's net instead of fruit.
+        if CGFloat.random(in: 0..<1) < Constants.netSpawnChance {
+            prize = Prize(ring: ring, angle: Constants.pacScreenAngle, points: 0, kind: -1, active: true, isNet: true)
+            return
+        }
+        let idx = max(0, min(Constants.prizePoints.count - 1, level - 1))
+        prize = Prize(
+            ring: ring,
+            angle: Constants.pacScreenAngle,
+            points: Constants.prizePoints[idx],
+            kind: fruitKindForLevel(level),
+            active: true,
+            isNet: false
+        )
+    }
     func tryEatPrize(_ ring:Int)->Prize? { guard let p=prize,p.active,p.ring==ring else{return nil}; prize=nil; return p }
-    func tryEat(_ ring:Int,_ a:CGFloat,_ slop:CGFloat = 0.12)->Pellet? { for i in pellets.indices where !pellets[i].eaten && pellets[i].ring == ring && Constants.angleDist(pellets[i].angle,a) < slop { pellets[i].eaten=true; pelletCount -= 1; return pellets[i] }; return nil }
+    func tryEat(_ ring:Int,_ a:CGFloat,_ slop:CGFloat = 0.12)->Pellet? {
+        tryEat(ring, a, slop: slop, regular: true, power: true, flip: true)
+    }
+
+    /// Eat matching pellet kinds. Mirror mode uses power/flip only while restoring regular dots.
+    func tryEat(_ ring:Int,_ a:CGFloat, slop:CGFloat = 0.12, regular:Bool, power:Bool, flip:Bool)->Pellet? {
+        for i in pellets.indices where !pellets[i].eaten && pellets[i].ring == ring && Constants.angleDist(pellets[i].angle,a) < slop {
+            let p = pellets[i]
+            if p.flip { guard flip else { continue } }
+            else if p.power { guard power else { continue } }
+            else { guard regular else { continue } }
+            pellets[i].eaten=true; pelletCount -= 1; return pellets[i]
+        }
+        return nil
+    }
+
+    /// Mirror shadow: put a regular eaten dot back on the field.
+    @discardableResult
+    func tryRestoreDot(_ ring:Int,_ a:CGFloat,_ slop:CGFloat = 0.12)->Bool {
+        for i in pellets.indices where pellets[i].eaten && !pellets[i].power && !pellets[i].flip
+            && pellets[i].ring == ring && Constants.angleDist(pellets[i].angle,a) < slop {
+            pellets[i].eaten = false
+            pelletCount += 1
+            return true
+        }
+        return false
+    }
 }

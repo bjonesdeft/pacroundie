@@ -11,12 +11,14 @@ struct GameCanvasView: UIViewRepresentable {
         view.controller = controller
         view.isMultipleTouchEnabled = false
         view.backgroundColor = .black
+        controller.attachCanvas(view)
         return view
     }
 
     func updateUIView(_ uiView: GameCanvasUIView, context: Context) {
         uiView.controller = controller
-        uiView.setNeedsDisplay()
+        controller.attachCanvas(uiView)
+        // Display-link path calls setNeedsDisplay; avoid extra SwiftUI-driven redraws.
     }
 }
 
@@ -28,6 +30,8 @@ final class GameCanvasUIView: UIView {
         contentMode = .redraw
         isOpaque = true
         backgroundColor = .black
+        // Layer-backed drawing stays smoother under 3D board transforms.
+        layer.drawsAsynchronously = true
     }
 
     @available(*, unavailable)
